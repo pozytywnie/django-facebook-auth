@@ -5,7 +5,6 @@ from django.conf import settings
 import facebook
 
 import models
-import urls
 
 def _truncate(word, length, to_zero=False):
     if to_zero and len(word) > length:
