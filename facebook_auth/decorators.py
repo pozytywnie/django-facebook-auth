@@ -33,7 +33,7 @@ def login_required(close='http://www.facebook.com', force=False, extended=[]):
             else:
                 next = urlparse.urljoin(settings.FACEBOOK_APP_URL, request.path[1:])
                 url_base = 'https://graph.facebook.com/oauth/authorize?'
-                redirect_uri = urls.redirect_uri(next)
+                redirect_uri = urls.redirect_uri(next, close)
                 args = {
                     'type': 'client_cred',
                     'client_id': settings.FACEBOOK_APP_ID,

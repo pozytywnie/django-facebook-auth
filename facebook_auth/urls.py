@@ -15,11 +15,11 @@ class Next():
     def decode(self, data):
         return simplejson.loads(codecs.getdecoder('rot13')(data)[0])
 
-def redirect_uri(next):
+def redirect_uri(next, close):
     return urlparse.urljoin(
         settings.FACEBOOK_CANVAS_URL,
         reverse('facebook-auth-handler') + "?" +
-        Next().encode({'next': next})
+        Next().encode({'next': next, 'close': close})
     )
 
 urlpatterns = patterns('facebook_auth.views',
