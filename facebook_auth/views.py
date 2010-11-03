@@ -10,4 +10,6 @@ def handler(request):
                         redirect_uri=urls.redirect_uri(next['next'], next['close']))
     if user:
         login(request, user)
-    return http.HttpResponseRedirect(next['next'])
+    response = http.HttpResponseRedirect(next['next'])
+    response["P3P"] = 'CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"'
+    return response
