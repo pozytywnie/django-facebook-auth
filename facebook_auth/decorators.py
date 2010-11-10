@@ -42,6 +42,11 @@ def login_required(close='http://www.facebook.com', force=False, extended=[]):
                 if extended:
                     args['scope'] = ','.join(extended)
                 url =  url_base + urllib.urlencode(args)
-                return http.HttpResponse('<script>window.top.location="%s";</script>' % url)
+                return http.HttpResponse("""
+                    <html>
+                        <head><title>%(title)s</title></head>
+                        <body><script>window.top.location="%(url)s";</script></body>
+                    </html>
+                """ % dict(url=url, title=settings.APP_NAME))
         return res
     return decorator
