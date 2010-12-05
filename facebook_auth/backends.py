@@ -67,3 +67,6 @@ class FacebookBackend(object):
         except models.FacebookUser.DoesNotExist: #@UndefinedVariable
             return None
 
+class FacebookJavascriptBackend(FacebookBackend):
+    def authenticate(self, access_token):
+        return USER_FACTORY.get_user(access_token)
