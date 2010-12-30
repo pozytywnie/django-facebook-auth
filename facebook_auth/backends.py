@@ -43,6 +43,10 @@ class UserFactory(object):
         profile = facebook.GraphAPI(access_token).get_object('me')
         return self._product_user(access_token, profile)
 
+    def get_user_by_id(self, uid):
+        profile = facebook.GraphAPI().get_object(uid)
+        return self._product_user("", profile)
+
 USER_FACTORY = UserFactory()
 
 class FacebookBackend(object):
