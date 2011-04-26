@@ -9,7 +9,8 @@ setup(
     maintainer_email="tomasz@wysocki.info",
 
     install_requires=(
-        'django>=1.2',
+        'django',
+        'django-package-installer',
         'facebook-python-sdk',
         'simplejson',
     ),
