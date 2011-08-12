@@ -34,7 +34,8 @@ class UserFactory(object):
         copy_field('email', True)
         copy_field('first_name')
         copy_field('last_name')
-        user.access_token = access_token
+        if access_token is None:
+            user.access_token = access_token
 
         user.save()
         return user
@@ -45,7 +46,7 @@ class UserFactory(object):
 
     def get_user_by_id(self, uid):
         profile = facebook.GraphAPI().get_object(uid)
-        return self._product_user("", profile)
+        return self._product_user(None, profile)
 
 USER_FACTORY = UserFactory()
 
