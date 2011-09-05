@@ -34,7 +34,7 @@ class UserFactory(object):
         copy_field('email', True)
         copy_field('first_name')
         copy_field('last_name')
-        if access_token is None:
+        if access_token is not None:
             user.access_token = access_token
 
         user.save()

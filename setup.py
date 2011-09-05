@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='django-facebook-auth',
-    version='0.1.2',
+    version='0.1.3',
     description="Authorisation app for Facebook API.",
     maintainer="Tomasz Wysocki",
     maintainer_email="tomasz@wysocki.info",
