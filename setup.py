@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='django-facebook-auth',
-    version='0.1.3',
+    version='0.1.3.1',
     description="Authorisation app for Facebook API.",
     maintainer="Tomasz Wysocki",
     maintainer_email="tomasz@wysocki.info",
@@ -13,10 +13,12 @@ setup(
         'django-package-installer',
         'facebook-python-sdk',
         'simplejson',
+        'south',
     ),
 
     packages=[
         'facebook_auth',
+        'facebook_auth.migrations',
     ],
 )
 
