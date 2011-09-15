@@ -1,12 +1,12 @@
-from django.contrib.auth import models
-from django.db.models import fields
+from django.contrib.auth import models as auth_models
+from django.db import models
 import facebook
 import simplejson
-from django.conf import settings
 
-class FacebookUser(models.User):
-    user_id = fields.BigIntegerField(unique=True)
-    access_token = fields.TextField(blank=True, null=True)
+class FacebookUser(auth_models.User):
+    user_id = models.BigIntegerField(unique=True)
+    access_token = models.TextField(blank=True, null=True)
+    app_friends = models.ManyToManyField('self')
 
     @property
     def graph(self):
