@@ -27,4 +27,4 @@ class FacebookUser(auth_models.User):
         friends = self.friends
         friends_ids = [f['id'] for f in friends]
         self.app_friends.clear()
-        self.app_friends.add(FacebookUser.objects.filter(user_id__in=friends_ids))
+        self.app_friends.add(*FacebookUser.objects.filter(user_id__in=friends_ids))
