@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 from distutils.core import setup
 
+def read(name):
+    return open(path.join(path.dirname(__file__), name)).read()
+
 setup(
     name='django-facebook-auth',
     version='1.0.1',
     description="Authorisation app for Facebook API.",
+    long_description=read("README.rst"),
     maintainer="Tomasz Wysocki",
     maintainer_email="tomasz@wysocki.info",
 
