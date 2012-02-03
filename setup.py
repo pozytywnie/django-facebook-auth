@@ -10,7 +10,6 @@ setup(
 
     install_requires=(
         'django',
-        'django-package-installer',
         'facebook-python-sdk',
         'simplejson',
         'south',
