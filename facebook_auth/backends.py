@@ -38,6 +38,7 @@ class UserFactory(object):
             user.access_token = access_token
 
         user.save()
+        self.create_profile_object(profile, user)
         return user
 
     def get_user(self, access_token):
@@ -47,6 +48,20 @@ class UserFactory(object):
     def get_user_by_id(self, uid):
         profile = facebook.GraphAPI().get_object(uid)
         return self._product_user(None, profile)
+
+    def create_profile_object(self, profile, user):
+        if 'facebook_profile' in settings.INSTALLED_APPS:
+            from facebook_profile import models as profile_models
+            from facebook_profile import parser as profile_parser
+            parser = profile_parser.FacebookDataParser(profile, True, True)
+            try:
+                data = parser.run()
+                profile = profile_models.FacebookUserProfile.objects.create_or_update(data)
+                profile.user = user
+                profile.save()
+            except profile_parser.FacebookDataParserCriticalError:
+                pass
+
 
 USER_FACTORY = UserFactory()
 
