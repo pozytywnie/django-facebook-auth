@@ -6,16 +6,16 @@ import urls
 
 from django import http
 from django.conf import settings
-from facebook import GraphAPI, GraphAPIError
+from facepy import GraphAPI, FacepyError
 
 
 TICKET_VAR = 'facebook_auth_ticket'
 
 def _check_logined(access_token):
     try:
-        GraphAPI(access_token).get_object('me')
+        GraphAPI(access_token).get('me')
         return True
-    except GraphAPIError:
+    except FacepyError:
         return False
 
 def _allow(request, fun):

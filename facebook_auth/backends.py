@@ -2,7 +2,7 @@ import urllib
 from urlparse import parse_qs
 
 from django.conf import settings
-import facebook
+import facepy
 
 import models
 
@@ -42,11 +42,11 @@ class UserFactory(object):
         return user
 
     def get_user(self, access_token):
-        profile = facebook.GraphAPI(access_token).get_object('me')
+        profile = facepy.GraphAPI(access_token).get('me')
         return self._product_user(access_token, profile)
 
     def get_user_by_id(self, uid):
-        profile = facebook.GraphAPI().get_object(uid)
+        profile = facepy.GraphAPI().get(uid)
         return self._product_user(None, profile)
 
     def create_profile_object(self, profile, user):

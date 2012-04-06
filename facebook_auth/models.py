@@ -1,6 +1,6 @@
 from django.contrib.auth import models as auth_models
 from django.db import models
-import facebook
+import facepy
 import simplejson
 
 class FacebookUser(auth_models.User):
@@ -10,7 +10,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def graph(self):
-        return facebook.GraphAPI(self.access_token)
+        return facepy.GraphAPI(self.access_token)
 
     @property
     def js_session(self):
@@ -21,7 +21,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def friends(self):
-        return self.graph.get_connections('me', 'friends')['data']
+        return self.graph.get('me/friends')['data']
 
     def update_app_friends(self):
         friends = self.friends

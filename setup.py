@@ -15,9 +15,7 @@ setup(
 
     install_requires=(
         'django',
-        'facebook-python-sdk',
         'simplejson',
-        'south',
     ),
 
     packages=[
