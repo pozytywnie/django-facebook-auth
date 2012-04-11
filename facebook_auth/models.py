@@ -3,6 +3,8 @@ from django.db import models
 import facepy
 import simplejson
 
+from facebook_auth import utils
+
 class FacebookUser(auth_models.User):
     user_id = models.BigIntegerField(unique=True)
     access_token = models.TextField(blank=True, null=True)
@@ -21,7 +23,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def friends(self):
-        return self.graph.get('me/friends')['data']
+        return utils.get_from_graph_api(self.graph, "me/friends")
 
     def update_app_friends(self):
         friends = self.friends

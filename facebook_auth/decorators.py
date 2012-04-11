@@ -8,12 +8,13 @@ from django import http
 from django.conf import settings
 from facepy import GraphAPI, FacepyError
 
+from facebook_auth import utils
 
 TICKET_VAR = 'facebook_auth_ticket'
 
 def _check_logined(access_token):
     try:
-        GraphAPI(access_token).get('me')
+        utils.get_from_graph_api(GraphAPI(access_token), 'me')
         return True
     except FacepyError:
         return False

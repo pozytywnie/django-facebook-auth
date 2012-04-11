@@ -1,7 +1,9 @@
 from django.test.testcases import TestCase
+from ludibrio import Stub
+from facepy.exceptions import FacebookError
 
 from backends import _truncate as truncate
-from backends import USER_FACTORY
+from backends import USER_FACTORY, UserFactory
 
 class TruncaterTest(TestCase):
     def test_empty(self):
@@ -63,3 +65,32 @@ class UserFactoryTest(TestCase):
         self.assertEqual(user.last_name, 'a' * get_length('last_name'))
         self.assertEqual(user.email, '')
 
+class UserFactoryOnErrorTest(TestCase):
+    def test(self):
+        def raise_FB_error(*args, **kwargs):
+            raise FacebookError("msg", 1)
+
+        with Stub() as graph_api_class:
+            graph_api_class("123").get('me') >> {'id': '123'}
+        factory = UserFactory()
+        factory.graph_api_class = graph_api_class
+        user = factory.get_user("123")
+        self.assertEquals(123, user.user_id)
+
+        with Stub() as graph_api_class:
+            graph_api_class("123").get >> raise_FB_error
+            graph_api_class("123").get >> raise_FB_error
+            graph_api_class("123").get('me') >> {'id': '123'}
+        factory = UserFactory()
+        factory.graph_api_class = graph_api_class
+        user = factory.get_user("123")
+        self.assertEquals(123, user.user_id)
+
+        with Stub() as graph_api_class:
+            graph_api_class("123").get >> raise_FB_error
+            graph_api_class("123").get >> raise_FB_error
+            graph_api_class("123").get >> raise_FB_error
+            graph_api_class("123").get('me') >> {'id': '123'}
+        factory = UserFactory()
+        factory.graph_api_class = graph_api_class
+        self.assertRaises(FacebookError, lambda: factory.get_user("123"))
