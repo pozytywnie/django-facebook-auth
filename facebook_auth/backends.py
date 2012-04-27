@@ -44,7 +44,10 @@ class UserFactory(object):
         return user
 
     def get_user(self, access_token):
-        profile = utils.get_from_graph_api(self.graph_api_class(access_token), 'me')
+        try:
+            profile = utils.get_from_graph_api(self.graph_api_class(access_token), 'me')
+        except facepy.FacepyError:
+            return None
         return self._product_user(access_token, profile)
 
     def get_user_by_id(self, uid):

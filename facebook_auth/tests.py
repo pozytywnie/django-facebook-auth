@@ -1,6 +1,6 @@
 from django.test.testcases import TestCase
 from ludibrio import Stub
-from facepy.exceptions import FacebookError
+from facepy import FacepyError
 
 from backends import _truncate as truncate
 from backends import USER_FACTORY, UserFactory
@@ -68,7 +68,7 @@ class UserFactoryTest(TestCase):
 class UserFactoryOnErrorTest(TestCase):
     def test(self):
         def raise_FB_error(*args, **kwargs):
-            raise FacebookError("msg", 1)
+            raise FacepyError("msg", 1)
 
         with Stub() as graph_api_class:
             graph_api_class("123").get('me') >> {'id': '123'}
@@ -93,4 +93,4 @@ class UserFactoryOnErrorTest(TestCase):
             graph_api_class("123").get('me') >> {'id': '123'}
         factory = UserFactory()
         factory.graph_api_class = graph_api_class
-        self.assertRaises(FacebookError, lambda: factory.get_user("123"))
+        self.assertRaises(FacepyError, lambda: factory.get_user("123"))
