@@ -23,7 +23,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def friends(self):
-        return utils.get_from_graph_api(self.graph, "me/friends")
+        return utils.get_from_graph_api(self.graph, "me/friends")['data']
 
     def update_app_friends(self):
         friends = self.friends
