@@ -7,5 +7,5 @@ def get_from_graph_api(graphAPI, query):
         try:
             return graphAPI.get(query)
         except facepy.FacepyError as e:
-            if i == GRAPH_MAX_TRIES - 1 or e.code != 1 :
+            if i == GRAPH_MAX_TRIES - 1 or getattr(e, 'code', None) != 1 :
                 raise
