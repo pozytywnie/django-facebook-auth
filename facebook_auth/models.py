@@ -1,3 +1,6 @@
+from uuid import uuid1
+
+from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
 import facepy
@@ -30,3 +33,11 @@ class FacebookUser(auth_models.User):
         friends_ids = [f['id'] for f in friends]
         self.app_friends.clear()
         self.app_friends.add(*FacebookUser.objects.filter(user_id__in=friends_ids))
+
+
+def get_auth_address(request, redirect_to, scope=''):
+    state = unicode(uuid1())
+    request.session['state'] = state
+    return 'https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&scope=%s&state=%s' % (
+        settings.FACEBOOK_APP_ID, redirect_to, scope, state
+    )
