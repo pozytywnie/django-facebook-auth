@@ -13,6 +13,8 @@ from django.utils import html
 def get_auth_address(request, redirect_to, scope=''):
     state = unicode(uuid1())
     auth_requests = request.session.get('auth_requests', {})
+    if len(auth_requests) >= 20:
+        auth_requests = {}
     auth_requests[state] = {
         'method': request.method,
         'POST': request.POST,
