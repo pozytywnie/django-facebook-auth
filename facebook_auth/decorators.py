@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
+import urllib
 from uuid import uuid1
 
 from django import http
@@ -17,9 +18,13 @@ def get_auth_address(request, redirect_to, scope=''):
         'POST': request.POST,
     }
     request.session['auth_requests'] = auth_requests
-    return 'https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&scope=%s&state=%s' % (
-        settings.FACEBOOK_APP_ID, redirect_to, scope, state
-    )
+    args = {
+            'client_id': settings.FACEBOOK_APP_ID,
+            'redirect_uri': redirect_to,
+            'scope': scope,
+            'state': state,
+    }
+    return 'https://www.facebook.com/dialog/oauth?' + urllib.urlencode(args)
 
 
 def accept_login():
