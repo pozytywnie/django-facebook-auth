@@ -84,7 +84,7 @@ class FacebookBackend(object):
             access_token = parse_qs(data)['access_token'][-1]
         except KeyError:
             return None
-        user =  USER_FACTORY.get_user(access_token)
+        user = USER_FACTORY.get_user(access_token)
         return user
     def get_user(self, user_id):
         try:

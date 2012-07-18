@@ -1,53 +1,60 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
-import urllib
-import urlparse
-import urls
+from uuid import uuid1
 
 from django import http
 from django.conf import settings
-from facepy import GraphAPI, FacepyError
 
-from facebook_auth import utils
+from django.contrib.auth import authenticate, login
+from django.http import HttpResponseRedirect
 
-TICKET_VAR = 'facebook_auth_ticket'
 
-def _check_logined(access_token):
-    try:
-        utils.get_from_graph_api(GraphAPI(access_token), 'me')
-        return True
-    except FacepyError:
-        return False
+def get_auth_address(request, redirect_to, scope=''):
+    state = unicode(uuid1())
+    auth_requests = request.session.get('auth_requests', {})
+    auth_requests[state] = {
+        'method': request.method,
+        'POST': request.POST,
+    }
+    request.session['auth_requests'] = auth_requests
+    return 'https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&scope=%s&state=%s' % (
+        settings.FACEBOOK_APP_ID, redirect_to, scope, state
+    )
 
-def _allow(request, fun):
-    if hasattr(settings, 'FACEBOOK_ALLOW_UIDS'):
-        if request.user.user_id not in settings.FACEBOOK_ALLOW_UIDS:
-            return http.HttpResponse('Brak dostępu. Skontaktuj się z administratorem.')
-    return fun()
 
-def login_required(close='http://www.facebook.com', force=False, extended=[]):
+def accept_login():
     def decorator(fun):
         @wraps(fun)
         def res(request, *args, **kwargs):
-            if request.user.is_authenticated() and (not force or _check_logined(request.user.access_token)):
-                return _allow(request, lambda: fun(request, *args, **kwargs))
+            state = request.GET.get('state', None)
+            code = request.GET.get('code', None)
+            if state and code:
+                old_request = request.session.get('auth_requests', {}).get(state, None)
+                if old_request:
+                    request.method = old_request['method']
+                    request.POST = old_request['POST']
+                    del request.session['auth_requests'][state]
+                    request.session.modified = True
+                    user = authenticate(code=code, redirect_uri=request.build_absolute_uri(request.path))
+                    if user:
+                        login(request, user)
+                if request.method != 'POST':
+                    return HttpResponseRedirect(request.build_absolute_uri(request.path))
+            return fun(request, *args, **kwargs)
+        return res
+    return decorator
+
+
+def login_required():
+    def decorator(fun):
+        @wraps(fun)
+        def res(request, *args, **kwargs):
+            url = get_auth_address(request, request.build_absolute_uri(request.path))
+            if request.user.is_authenticated():
+                return fun(request, *args, **kwargs)
             else:
-                next = urlparse.urljoin(settings.FACEBOOK_APP_URL, request.path[1:])
-                url_base = 'https://graph.facebook.com/oauth/authorize?'
-                redirect_uri = urls.redirect_uri(next, close)
-                args = {
-                    'type': 'client_cred',
-                    'client_id': settings.FACEBOOK_APP_ID,
-                    'redirect_uri': redirect_uri,
-                }
-                if extended:
-                    args['scope'] = ','.join(extended)
-                url =  url_base + urllib.urlencode(args)
-                return http.HttpResponse("""
-                    <html>
-                        <head><title>%(title)s</title></head>
-                        <body><script>window.top.location="%(url)s";</script></body>
-                    </html>
-                """ % dict(url=url, title=settings.APP_NAME))
+                return http.HttpResponse(("<html><head><title></title></head>"
+                        "<body><script>window.top.location=\"%(url)s\";</script></body>"
+                        "</html>") % dict(url=url))
         return res
     return decorator
