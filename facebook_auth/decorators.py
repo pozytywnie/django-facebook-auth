@@ -54,10 +54,10 @@ def login_required():
     def decorator(fun):
         @wraps(fun)
         def res(request, *args, **kwargs):
-            url = get_auth_address(request, request.build_absolute_uri(request.path))
             if request.user.is_authenticated():
                 return fun(request, *args, **kwargs)
             else:
+                url = get_auth_address(request, request.build_absolute_uri(request.path))
                 return http.HttpResponse(("<html><head><title></title></head>"
                         "<body><script>window.top.location=\"%(url)s\";</script></body>"
                         "</html>") % dict(url=url))
