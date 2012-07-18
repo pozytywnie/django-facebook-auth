@@ -8,7 +8,7 @@ from django.conf import settings
 
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
-
+from django.utils import html
 
 def get_auth_address(request, redirect_to, scope=''):
     state = unicode(uuid1())
@@ -61,6 +61,6 @@ def login_required():
                 url = get_auth_address(request, request.build_absolute_uri(request.path))
                 return http.HttpResponse(("<html><head><title></title></head>"
                         "<body><script>window.top.location=\"%(url)s\";</script></body>"
-                        "</html>") % dict(url=url))
+                        "</html>") % dict(url=html.escapejs(url)))
         return res
     return decorator
