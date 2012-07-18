@@ -16,6 +16,7 @@ def get_auth_address(request, redirect_to, scope=''):
     auth_requests[state] = {
         'method': request.method,
         'POST': request.POST,
+        'path': request.path,
     }
     request.session['auth_requests'] = auth_requests
     args = {
@@ -35,7 +36,7 @@ def accept_login():
             code = request.GET.get('code', None)
             if state and code:
                 old_request = request.session.get('auth_requests', {}).get(state, None)
-                if old_request:
+                if old_request and old_request['path'] == request.path:
                     request.method = old_request['method']
                     request.POST = old_request['POST']
                     del request.session['auth_requests'][state]
