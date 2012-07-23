@@ -3,8 +3,9 @@ import simplejson
 import urllib
 import urlparse
 
-from django.conf.urls.defaults import patterns, url
 from django.conf import settings
+from django.conf.urls.defaults import patterns
+from django.conf.urls.defaults import url
 from django.core.urlresolvers import reverse
 
 class Next():

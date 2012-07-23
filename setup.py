@@ -24,4 +24,3 @@ setup(
         'facebook_auth.migrations',
     ],
 )
-

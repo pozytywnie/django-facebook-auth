@@ -4,7 +4,8 @@ from urlparse import parse_qs
 from django.conf import settings
 import facepy
 
-from facebook_auth import models, utils
+from facebook_auth import models
+from facebook_auth import utils
 
 def _truncate(word, length, to_zero=False):
     if to_zero and len(word) > length:

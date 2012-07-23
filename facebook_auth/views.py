@@ -1,5 +1,6 @@
+from django.contrib.auth import authenticate
+from django.contrib.auth import login
 from django import http
-from django.contrib.auth import authenticate, login
 from facebook_auth import urls
 
 def handler(request):

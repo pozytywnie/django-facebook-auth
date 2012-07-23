@@ -1,9 +1,10 @@
 from django.test.testcases import TestCase
-from ludibrio import Stub
 from facepy import FacepyError
+from ludibrio import Stub
 
 from backends import _truncate as truncate
-from backends import USER_FACTORY, UserFactory
+from backends import USER_FACTORY
+from backends import UserFactory
 
 class TruncaterTest(TestCase):
     def test_empty(self):

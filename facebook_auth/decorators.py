@@ -3,10 +3,11 @@ from functools import wraps
 import urllib
 from uuid import uuid1
 
-from django import http
 from django.conf import settings
+from django import http
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
+from django.contrib.auth import login
 from django.http import HttpResponseRedirect
 from django.utils import html
 
