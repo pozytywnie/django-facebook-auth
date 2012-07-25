@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
+import re
 import urllib
 from uuid import uuid1
 
@@ -54,7 +55,7 @@ def accept_login():
     return decorator
 
 
-def login_required(scope=''):
+def login_required(scope='', return_view_content=False):
     def decorator(fun):
         @wraps(fun)
         def res(request, *args, **kwargs):
@@ -62,8 +63,12 @@ def login_required(scope=''):
                 return fun(request, *args, **kwargs)
             else:
                 url = get_auth_address(request, request.build_absolute_uri(request.path), scope)
-                return http.HttpResponse(("<html><head><title></title></head>"
-                        "<body><script>window.top.location=\"%(url)s\";</script></body>"
-                        "</html>") % dict(url=html.escapejs(url)))
+                if return_view_content:
+                    response = fun(request, *args, **kwargs)
+                else:
+                    response = http.HttpResponse("<html><head><title></title></head><body></body></html>")
+                redirect = "<script>window.top.location=\"%(url)s\";</script>" % dict(url=html.escapejs(url))
+                response.content = re.sub("<body(.*?)>", "<body\\1>" + redirect, response.content)
+                return response
         return res
     return decorator
