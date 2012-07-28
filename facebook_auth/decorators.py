@@ -11,18 +11,26 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import login
 from django.http import HttpResponseRedirect
 from django.utils import html
+from django.template.response import TemplateResponse
 
-def get_auth_address(request, redirect_to, scope=''):
-    state = unicode(uuid1())
-    auth_requests = request.session.get('auth_requests', {})
-    if len(auth_requests) >= 20:
-        auth_requests = {}
-    auth_requests[state] = {
-        'method': request.method,
-        'POST': request.POST,
-        'path': request.path,
-    }
-    request.session['auth_requests'] = auth_requests
+def get_auth_address(request, redirect_to, scope='', state=None):
+    if not state:
+        state = unicode(uuid1())
+        auth_requests = request.session.get('auth_requests', {})
+        if len(auth_requests) >= 20:
+            auth_requests = {}
+        auth_requests[state] = {
+            'method': request.method,
+            'POST': request.POST,
+            'path': request.path,
+            'scope': scope,
+        }
+        request.session['auth_requests'] = auth_requests
+    else:
+        scope = (request.session
+                 .get('auth_requests', {})
+                 .get(state, {})
+                 .get('scope', ''))
     args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'redirect_uri': redirect_to,
@@ -31,8 +39,11 @@ def get_auth_address(request, redirect_to, scope=''):
     }
     return 'https://www.facebook.com/dialog/oauth?' + urllib.urlencode(args)
 
+def use_fallback(get):
+    return ('access_denied' == get.get('error', '') and
+            'user_denied' == get.get('error_reason', ''))
 
-def accept_login():
+def accept_login(fallback_template=None, scope=''):
     def decorator(fun):
         @wraps(fun)
         def res(request, *args, **kwargs):
@@ -50,6 +61,9 @@ def accept_login():
                         login(request, user)
                 if request.method != 'POST':
                     return HttpResponseRedirect(request.build_absolute_uri(request.path))
+            if fallback_template and state and use_fallback(request.GET):
+                url = get_auth_address(request, request.build_absolute_uri(request.path), state=state)
+                return TemplateResponse(request, fallback_template, context={'url': url})
             return fun(request, *args, **kwargs)
         return res
     return decorator
