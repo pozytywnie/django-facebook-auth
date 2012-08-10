@@ -38,11 +38,27 @@ class UserFactory(object):
         copy_field('first_name')
         copy_field('last_name')
         if access_token is not None:
+            if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
+                access_token = self.get_long_lived_access_token(access_token)
             user.access_token = access_token
-
         user.save()
         self.create_profile_object(profile, user)
         return user
+
+    def get_long_lived_access_token(self, access_token):
+        url_base = 'https://graph.facebook.com/oauth/access_token?'
+        args = {
+            'client_id': settings.FACEBOOK_APP_ID,
+            'client_secret': settings.FACEBOOK_APP_SECRET,
+            'grant_type': 'fb_exchange_token',
+            'fb_exchange_token': access_token,
+        }
+        data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
+        try:
+            access_token = parse_qs(data)['access_token'][-1]
+        except KeyError:
+            pass
+        return access_token
 
     def get_user(self, access_token):
         try:

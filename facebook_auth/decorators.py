@@ -10,8 +10,9 @@ from django import http
 from django.contrib.auth import authenticate
 from django.contrib.auth import login
 from django.http import HttpResponseRedirect
-from django.utils import html
 from django.template.response import TemplateResponse
+from django.utils import html
+
 
 def get_auth_address(request, redirect_to, scope='', state=None):
     if not state:
