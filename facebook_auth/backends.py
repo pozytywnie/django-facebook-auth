@@ -21,13 +21,11 @@ class UserFactory(object):
 
     def _product_user(self, access_token, profile):
         user_id = int(profile['id'])
-        try:
-            user = models.FacebookUser.objects.get(user_id=user_id)
-        except models.FacebookUser.DoesNotExist: #@UndefinedVariable
-            user = models.FacebookUser()
-            user.user_id = user_id
+        username = self.__create_username(profile)
+        user, created = models.FacebookUser.objects.get_or_create(user_id=user_id,
+                                                                  username=username)
+        if created:
             user.set_unusable_password()
-            user.username = self.__create_username(profile)
 
         def copy_field(field, to_zero=False):
             if field in profile:
