@@ -26,7 +26,7 @@ class FacebookUser(auth_models.User):
         return utils.get_from_graph_api(self.graph, "me/friends")['data']
 
     def update_app_friends(self):
-        friends = self.friends
-        friends_ids = [f['id'] for f in friends]
-        self.app_friends.clear()
-        self.app_friends.add(*FacebookUser.objects.filter(user_id__in=friends_ids))
+        if len(FacebookUser.objects.filter(pk=self.pk).select_for_update()):
+            friends = self.friends
+            friends_ids = [f['id'] for f in friends]
+            self.app_friends = FacebookUser.objects.filter(user_id__in=friends_ids)
