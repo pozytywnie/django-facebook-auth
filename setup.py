@@ -16,7 +16,6 @@ setup(
     install_requires=(
         'django',
         'facepy',
-        'simplejson',
     ),
 
     packages=[

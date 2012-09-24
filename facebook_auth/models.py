@@ -1,7 +1,7 @@
 from django.contrib.auth import models as auth_models
 from django.db import models
+from django.utils import simplejson
 import facepy
-import simplejson
 
 from facebook_auth import utils
 
