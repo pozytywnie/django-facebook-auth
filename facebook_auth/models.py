@@ -8,6 +8,7 @@ from facebook_auth import utils
 class FacebookUser(auth_models.User):
     user_id = models.BigIntegerField(unique=True)
     access_token = models.TextField(blank=True, null=True)
+    access_token_expiration_date = models.DateTimeField(blank=True, null=True)
     app_friends = models.ManyToManyField('self')
 
     @property

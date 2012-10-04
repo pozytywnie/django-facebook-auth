@@ -3,8 +3,13 @@ from facepy.exceptions import FacebookError
 from ludibrio import Stub
 
 from backends import _truncate as truncate
-from backends import USER_FACTORY
 from backends import UserFactory
+
+class TestUserFactory(UserFactory):
+    def _get_access_token_expiration_date(self, access_token):
+        return None
+
+TEST_USER_FACTORY = TestUserFactory()
 
 class TruncaterTest(TestCase):
     def test_empty(self):
@@ -39,7 +44,7 @@ class UserFactoryTest(TestCase):
             'last_name': '',
             'email': ''
         }
-        USER_FACTORY._product_user('', profile).save()
+        TEST_USER_FACTORY._product_user('', profile).save()
 
     def test_no_email(self):
         profile = {
@@ -47,7 +52,7 @@ class UserFactoryTest(TestCase):
             'first_name': '',
             'last_name': '',
         }
-        USER_FACTORY._product_user('', profile).save()
+        TEST_USER_FACTORY._product_user('', profile).save()
 
     def test_to_long(self):
         profile = {
@@ -56,7 +61,7 @@ class UserFactoryTest(TestCase):
             'last_name': 'a' * 1000,
             'email': 'a' * 1000
         }
-        user = USER_FACTORY._product_user('', profile)
+        user = TEST_USER_FACTORY._product_user('', profile)
         user.save()
 
         def get_length(field):
@@ -73,7 +78,7 @@ class UserFactoryOnErrorTest(TestCase):
 
         with Stub() as graph_api_class:
             graph_api_class("123").get('me') >> {'id': '123'}
-        factory = UserFactory()
+        factory = TestUserFactory()
         factory.graph_api_class = graph_api_class
         user = factory.get_user("123")
         self.assertEquals(123, user.user_id)
@@ -82,7 +87,7 @@ class UserFactoryOnErrorTest(TestCase):
             graph_api_class("123").get >> raise_FB_error
             graph_api_class("123").get >> raise_FB_error
             graph_api_class("123").get('me') >> {'id': '123'}
-        factory = UserFactory()
+        factory = TestUserFactory()
         factory.graph_api_class = graph_api_class
         user = factory.get_user("123")
         self.assertEquals(123, user.user_id)
@@ -92,6 +97,6 @@ class UserFactoryOnErrorTest(TestCase):
             graph_api_class("123").get >> raise_FB_error
             graph_api_class("123").get >> raise_FB_error
             graph_api_class("123").get('me') >> {'id': '123'}
-        factory = UserFactory()
+        factory = TestUserFactory()
         factory.graph_api_class = graph_api_class
         self.assertEqual(None, factory.get_user("123"))
