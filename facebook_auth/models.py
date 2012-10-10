@@ -29,4 +29,8 @@ class FacebookUser(auth_models.User):
         if len(FacebookUser.objects.filter(pk=self.pk).select_for_update()):
             friends = self.friends
             friends_ids = [f['id'] for f in friends]
-            self.app_friends = FacebookUser.objects.filter(user_id__in=friends_ids)
+            existing_friends = self.app_friends.all().values_list('user_id', flat=True)
+            new_friends = FacebookUser.objects.filter(user_id__in=friends_ids).exclude(user_id__in=existing_friends)
+            removed_friends = self.app_friends.exclude(user_id__in=friends_ids)
+            self.app_friends.add(*new_friends)
+            self.app_friends.remove(*removed_friends)
