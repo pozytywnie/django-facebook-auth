@@ -21,7 +21,7 @@ class UserFactory(object):
     def __create_username(self, profile):
             return profile['id'] # TODO better username
 
-    def _product_user(self, access_token, profile):
+    def _product_user(self, access_token, profile, token_expiration_date=None):
         user_id = int(profile['id'])
         username = self.__create_username(profile)
         user, created = models.FacebookUser.objects.get_or_create(user_id=user_id,
@@ -41,6 +41,7 @@ class UserFactory(object):
             if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
                 access_token = self.get_long_lived_access_token(access_token)
             user.access_token = access_token
+        user.access_token_expiration_date = token_expiration_date
         user.save()
         self.create_profile_object(profile, user)
         return user
@@ -60,12 +61,12 @@ class UserFactory(object):
             pass
         return access_token
 
-    def get_user(self, access_token):
+    def get_user(self, access_token, token_expiration_date=None):
         try:
             profile = utils.get_from_graph_api(self.graph_api_class(access_token), 'me')
         except facepy.FacepyError:
             return None
-        return self._product_user(access_token, profile)
+        return self._product_user(access_token, profile, token_expiration_date)
 
     def get_user_by_id(self, uid):
         profile = utils.get_from_graph_api(self.graph_api_class(), uid)
@@ -113,5 +114,5 @@ class FacebookBackend(object):
 
 
 class FacebookJavascriptBackend(FacebookBackend):
-    def authenticate(self, access_token):
-        return USER_FACTORY.get_user(access_token)
+    def authenticate(self, access_token, token_expiration_date=None):
+        return USER_FACTORY.get_user(access_token, token_expiration_date)
