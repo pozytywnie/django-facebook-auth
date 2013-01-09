@@ -1,9 +1,14 @@
+import logging
+
 from django.contrib.auth import models as auth_models
 from django.db import models
 from django.utils import simplejson
 import facepy
 
 from facebook_auth import utils
+
+logger = logging.getLogger(__name__)
+
 
 class FacebookUser(auth_models.User):
     user_id = models.BigIntegerField(unique=True)
@@ -24,7 +29,11 @@ class FacebookUser(auth_models.User):
 
     @property
     def friends(self):
-        return utils.get_from_graph_api(self.graph, "me/friends")['data']
+        response = utils.get_from_graph_api(self.graph, "me/friends")
+        if 'data' in response:
+            return response['data']
+        logger.warning("OpenGraph error: %s" % response)
+        return []
 
     def update_app_friends(self):
         if len(FacebookUser.objects.filter(pk=self.pk).select_for_update()):
