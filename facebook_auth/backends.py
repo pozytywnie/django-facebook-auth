@@ -7,11 +7,13 @@ import facepy
 from facebook_auth import models
 from facebook_auth import utils
 
+
 def _truncate(word, length, to_zero=False):
     if to_zero and len(word) > length:
         return word[0:0] # preserve type
     else:
         return word[:length]
+
 
 class UserFactory(object):
     graph_api_class = facepy.GraphAPI
@@ -85,6 +87,7 @@ class UserFactory(object):
 
 USER_FACTORY = UserFactory()
 
+
 class FacebookBackend(object):
     def authenticate(self, code=None, redirect_uri=None):
         url_base = 'https://graph.facebook.com/oauth/access_token?'
@@ -101,11 +104,13 @@ class FacebookBackend(object):
             return None
         user = USER_FACTORY.get_user(access_token)
         return user
+
     def get_user(self, user_id):
         try:
             return models.FacebookUser.objects.get(pk=user_id)
         except models.FacebookUser.DoesNotExist: #@UndefinedVariable
             return None
+
 
 class FacebookJavascriptBackend(FacebookBackend):
     def authenticate(self, access_token):

@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django import http
 from facebook_auth import urls
 
+
 def handler(request):
     next = urls.Next().decode(request.GET['next'])
     if 'code' not in request.GET:

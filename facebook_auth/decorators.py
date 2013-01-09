@@ -40,9 +40,11 @@ def get_auth_address(request, redirect_to, scope='', state=None):
     }
     return 'https://www.facebook.com/dialog/oauth?' + urllib.urlencode(args)
 
+
 def use_fallback(get):
     return ('access_denied' == get.get('error', '') and
             'user_denied' == get.get('error_reason', ''))
+
 
 def accept_login(fallback_template=None, scope=''):
     def decorator(fun):

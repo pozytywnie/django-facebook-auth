@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from distutils.core import setup
 
+
 def read(name):
     from os import path
     return open(path.join(path.dirname(__file__), name)).read()
