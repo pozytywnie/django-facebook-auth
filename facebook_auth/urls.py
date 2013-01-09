@@ -3,10 +3,11 @@ import urllib
 import urlparse
 
 from django.conf import settings
-from django.conf.urls.defaults import patterns
-from django.conf.urls.defaults import url
+from django.conf.urls import patterns
+from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.utils import simplejson
+
 
 class Next():
     def encode(self, data):
@@ -15,6 +16,7 @@ class Next():
 
     def decode(self, data):
         return simplejson.loads(codecs.getdecoder('rot13')(data)[0])
+
 
 def redirect_uri(next, close):
     return urlparse.urljoin(
