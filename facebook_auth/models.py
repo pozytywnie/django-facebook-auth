@@ -1,8 +1,8 @@
+import json
 import logging
 
 from django.contrib.auth import models as auth_models
 from django.db import models
-from django.utils import simplejson
 import facepy
 
 from facebook_auth import utils
@@ -22,7 +22,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def js_session(self):
-        return simplejson.dumps({
+        return json.dumps({
             'access_token': self.access_token,
             'uid': self.user_id
         })
