@@ -1,3 +1,4 @@
+import logging
 import urllib
 from urlparse import parse_qs
 
@@ -6,6 +7,8 @@ import facepy
 
 from facebook_auth import models
 from facebook_auth import utils
+
+logger = logging.getLogger(__name__)
 
 
 def _truncate(word, length, to_zero=False):
@@ -101,7 +104,8 @@ class FacebookBackend(object):
         data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
         try:
             access_token = parse_qs(data)['access_token'][-1]
-        except KeyError:
+        except KeyError as e:
+            logger.exception(e)
             return None
         user = USER_FACTORY.get_user(access_token)
         return user
