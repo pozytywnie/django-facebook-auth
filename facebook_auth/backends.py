@@ -105,7 +105,8 @@ class FacebookBackend(object):
         try:
             access_token = parse_qs(data)['access_token'][-1]
         except KeyError as e:
-            logger.exception(e)
+            logger.exception(e, extra={'facebook_response': data,
+                                       'sent_args': args})
             return None
         user = USER_FACTORY.get_user(access_token)
         return user
