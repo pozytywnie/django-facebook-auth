@@ -1,6 +1,9 @@
 import logging
 import urllib
-from urlparse import parse_qs
+try:
+    from urllib.parse import parse_qs
+except ImportError:
+    from urlparse import parse_qs
 
 from django.conf import settings
 import facepy

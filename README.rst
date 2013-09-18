@@ -36,4 +36,3 @@ Add authentication backends to AUTHENTICATION_BACKENDS::
         'facebook_auth.backends.FacebookJavascriptBackend',
         ...
     )
-

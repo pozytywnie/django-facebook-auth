@@ -1,7 +1,10 @@
 import codecs
 import json
 import urllib
-import urlparse
+try:
+    from urllib.parse import urljoin
+except ImportError:
+    from urlparse import urljoin
 
 from django.conf import settings
 from django.conf.urls import patterns
@@ -19,7 +22,7 @@ class Next():
 
 
 def redirect_uri(next, close):
-    return urlparse.urljoin(
+    return urljoin(
         settings.FACEBOOK_CANVAS_URL,
         reverse('facebook-auth-handler') + "?" +
         Next().encode({'next': next, 'close': close})
