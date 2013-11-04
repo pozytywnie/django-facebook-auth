@@ -3,6 +3,7 @@ import logging
 
 from django.contrib.auth import models as auth_models
 from django.db import models
+from django.utils import timezone
 import facepy
 
 from facebook_auth import utils
@@ -54,3 +55,23 @@ class UserToken(models.Model):
     class Meta:
         verbose_name = 'User token'
         verbose_name_plural = 'User tokens'
+
+
+class UserTokenManager(object):
+    @staticmethod
+    def insert_token(provider_user_id, token, expiration_date):
+        UserToken.objects.get_or_create(provider_user_id=provider_user_id,
+                                        token=token,
+                                        expiration_date=expiration_date)
+
+    @staticmethod
+    def get_access_token(provider_user_id):
+        now = timezone.now()
+        return (UserToken.objects
+                .filter(provider_user_id=provider_user_id,
+                        expiration_date__gt=now)
+                .latest('expiration_date'))
+
+    @staticmethod
+    def invalidate_access_token(token):
+        UserToken.objects.filter(token=token).update(deleted=True)
