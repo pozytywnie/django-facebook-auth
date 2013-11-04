@@ -43,3 +43,14 @@ class FacebookUser(auth_models.User):
         removed_friends = self.app_friends.exclude(user_id__in=friends_ids)
         self.app_friends.add(*new_friends)
         self.app_friends.remove(*removed_friends)
+
+
+class UserToken(models.Model):
+    provider_user_id = models.CharField(max_length=255)
+    token = models.TextField()
+    expiration_date = models.DateTimeField(blank=True, null=True)
+    deleted = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'User token'
+        verbose_name_plural = 'User tokens'
