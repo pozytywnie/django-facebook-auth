@@ -1,3 +1,4 @@
+from datetime import timedelta
 import json
 import logging
 import urllib
@@ -10,6 +11,7 @@ except ImportError:
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
+from django.utils import timezone
 import facepy
 
 from facebook_auth import utils
@@ -102,8 +104,14 @@ class UserTokenManager(object):
             'fb_exchange_token': access_token,
         }
         data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
+        expires_in_seconds = 0
         try:
             access_token = parse_qs(data)['access_token'][-1]
+            expires_in_seconds = int(parse_qs(data)['expires'][-1])
         except KeyError:
             pass
-        return access_token
+        return access_token, expires_in_seconds
+
+    @staticmethod
+    def convert_expiration_seconds_to_date(seconds):
+        return timezone.now() + timedelta(seconds=seconds)
