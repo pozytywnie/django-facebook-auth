@@ -1,9 +1,15 @@
 import json
 import logging
+import urllib
 
+try:
+    from urllib.parse import parse_qs
+except ImportError:
+    from urlparse import parse_qs
+
+from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
-from django.utils import timezone
 import facepy
 
 from facebook_auth import utils
@@ -13,9 +19,21 @@ logger = logging.getLogger(__name__)
 
 class FacebookUser(auth_models.User):
     user_id = models.BigIntegerField(unique=True)
-    access_token = models.TextField(blank=True, null=True)
-    access_token_expiration_date = models.DateTimeField(blank=True, null=True)
     app_friends = models.ManyToManyField('self')
+
+    @property
+    def access_token(self):
+        try:
+            return self._get_token_object().token
+        except UserToken.DoesNotExist:
+            return None
+
+    @property
+    def access_token_expiration_date(self):
+        return self._get_token_object().expiration_date
+
+    def _get_token_object(self):
+        return UserTokenManager.get_access_token(self.user_id)
 
     @property
     def graph(self):
@@ -66,12 +84,26 @@ class UserTokenManager(object):
 
     @staticmethod
     def get_access_token(provider_user_id):
-        now = timezone.now()
         return (UserToken.objects
-                .filter(provider_user_id=provider_user_id,
-                        expiration_date__gt=now)
+                .filter(provider_user_id=provider_user_id)
                 .latest('expiration_date'))
 
     @staticmethod
     def invalidate_access_token(token):
         UserToken.objects.filter(token=token).update(deleted=True)
+
+    @staticmethod
+    def get_long_lived_access_token(access_token):
+        url_base = 'https://graph.facebook.com/oauth/access_token?'
+        args = {
+            'client_id': settings.FACEBOOK_APP_ID,
+            'client_secret': settings.FACEBOOK_APP_SECRET,
+            'grant_type': 'fb_exchange_token',
+            'fb_exchange_token': access_token,
+        }
+        data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
+        try:
+            access_token = parse_qs(data)['access_token'][-1]
+        except KeyError:
+            pass
+        return access_token
