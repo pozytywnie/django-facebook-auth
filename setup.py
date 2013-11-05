@@ -15,6 +15,7 @@ setup(
     maintainer_email="tomasz@wysocki.info",
 
     install_requires=(
+        'celery',
         'django',
         'facepy',
     ),

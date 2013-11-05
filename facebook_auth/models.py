@@ -9,6 +9,7 @@ try:
 except ImportError:
     from urlparse import parse_qs
 
+from celery import task
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
@@ -100,17 +101,16 @@ class UserTokenManager(object):
 class FacebookTokenManager(object):
     TokenInfo = collections.namedtuple('TokenInfo', ['user', 'expires', 'token'])
 
-    def handle_fresh_access_token(self, access_token, token_expiration_date, user_id):
+    @staticmethod
+    def insert_token(access_token, token_expiration_date, user_id):
         token_manager = UserTokenManager()
         if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
-            access_token, expires_in_seconds = self.get_long_lived_access_token(access_token)
-            if expires_in_seconds > 0:
-                token_expiration_date = self.convert_expiration_seconds_to_date(expires_in_seconds)
+            insert_extended_token.delay(access_token, user_id)
         token_manager.insert_token(user_id, access_token, token_expiration_date)
 
     def discover_fresh_access_token(self, access_token):
         data = self.debug_token(access_token)
-        self.handle_fresh_access_token(access_token, data.expires, data.user)
+        self.insert_token(access_token, data.expires, data.user)
 
     @staticmethod
     def convert_expiration_seconds_to_date(seconds):
@@ -154,3 +154,14 @@ class FacebookTokenManager(object):
         token = facepy.utils.get_application_access_token(settings.FACEBOOK_APP_ID,
                                                           settings.FACEBOOK_APP_SECRET)
         return facepy.GraphAPI(token)
+
+
+@task()
+def insert_extended_token(access_token, user_id):
+    manager = FacebookTokenManager()
+    token_manager = UserTokenManager()
+    extended_access_token, expires_in_seconds = manager.get_long_lived_access_token(access_token)
+    if expires_in_seconds == 0:
+        logger.warning('Extended token did not return expiresIn')
+    token_expiration_date = manager.convert_expiration_seconds_to_date(expires_in_seconds)
+    token_manager.insert_token(user_id, extended_access_token, token_expiration_date)

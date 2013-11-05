@@ -44,7 +44,7 @@ class UserFactory(object):
         copy_field('first_name')
         copy_field('last_name')
         if access_token is not None:
-            models.FacebookTokenManager().handle_fresh_access_token(access_token, token_expiration_date, user.user_id)
+            models.FacebookTokenManager().insert_token(access_token, token_expiration_date, user.user_id)
         user.save()
         self.create_profile_object(profile, user)
         return user
