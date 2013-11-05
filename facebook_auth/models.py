@@ -94,6 +94,20 @@ class UserTokenManager(object):
     def invalidate_access_token(token):
         UserToken.objects.filter(token=token).update(deleted=True)
 
+
+class FacebookTokenManager(object):
+    def handle_fresh_access_token(self, access_token, token_expiration_date, user_id):
+        token_manager = UserTokenManager()
+        if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
+            access_token, expires_in_seconds = self.get_long_lived_access_token(access_token)
+            if expires_in_seconds > 0:
+                token_expiration_date = self.convert_expiration_seconds_to_date(expires_in_seconds)
+        token_manager.insert_token(user_id, access_token, token_expiration_date)
+
+    @staticmethod
+    def convert_expiration_seconds_to_date(seconds):
+        return timezone.now() + timedelta(seconds=seconds)
+
     @staticmethod
     def get_long_lived_access_token(access_token):
         url_base = 'https://graph.facebook.com/oauth/access_token?'
@@ -111,7 +125,3 @@ class UserTokenManager(object):
         except KeyError:
             pass
         return access_token, expires_in_seconds
-
-    @staticmethod
-    def convert_expiration_seconds_to_date(seconds):
-        return timezone.now() + timedelta(seconds=seconds)

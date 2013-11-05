@@ -44,12 +44,7 @@ class UserFactory(object):
         copy_field('first_name')
         copy_field('last_name')
         if access_token is not None:
-            token_manager = models.UserTokenManager()
-            if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
-                access_token, expires_in_seconds = token_manager.get_long_lived_access_token(access_token)
-                if expires_in_seconds > 0:
-                    token_expiration_date = token_manager.convert_expiration_seconds_to_date(expires_in_seconds)
-            token_manager.insert_token(user.user_id, access_token, token_expiration_date)
+            models.FacebookTokenManager().handle_fresh_access_token(access_token, token_expiration_date, user.user_id)
         user.save()
         self.create_profile_object(profile, user)
         return user
