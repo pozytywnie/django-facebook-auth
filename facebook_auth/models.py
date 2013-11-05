@@ -1,3 +1,4 @@
+import collections
 from datetime import timedelta
 import json
 import logging
@@ -14,6 +15,7 @@ from django.db import models
 from django.utils import timezone
 import facepy
 
+from facebook_auth import forms
 from facebook_auth import utils
 
 logger = logging.getLogger(__name__)
@@ -96,6 +98,8 @@ class UserTokenManager(object):
 
 
 class FacebookTokenManager(object):
+    TokenInfo = collections.namedtuple('TokenInfo', ['user', 'expires', 'token'])
+
     def handle_fresh_access_token(self, access_token, token_expiration_date, user_id):
         token_manager = UserTokenManager()
         if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
@@ -125,3 +129,24 @@ class FacebookTokenManager(object):
         except KeyError:
             pass
         return access_token, expires_in_seconds
+
+    def debug_token(self, token):
+        graph = self._get_application_graph()
+        response = graph.get('/debug_token', input_token=token)
+        parsed_response = forms.parse_facebook_response(response, token)
+        if parsed_response.is_valid:
+            data = parsed_response.parsed_data
+            return self.get_token_info(data)
+        else:
+            raise ValueError('Invalid Facebook response.', {'errors': parsed_response.errors})
+
+    def get_token_info(self, response_data):
+        return self.TokenInfo(token=response_data['token'],
+                              user=response_data['user_id'],
+                              expires=response_data['expires_at'])
+
+    @staticmethod
+    def _get_application_graph():
+        token = facepy.utils.get_application_access_token(settings.FACEBOOK_APP_ID,
+                                                          settings.FACEBOOK_APP_SECRET)
+        return facepy.GraphAPI(token)
