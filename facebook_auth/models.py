@@ -90,7 +90,8 @@ class UserTokenManager(object):
     @staticmethod
     def get_access_token(provider_user_id):
         return (UserToken.objects
-                .filter(provider_user_id=provider_user_id)
+                .filter(provider_user_id=provider_user_id,
+                        deleted=False)
                 .latest('expiration_date'))
 
     @staticmethod
