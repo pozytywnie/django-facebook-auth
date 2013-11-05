@@ -108,6 +108,10 @@ class FacebookTokenManager(object):
                 token_expiration_date = self.convert_expiration_seconds_to_date(expires_in_seconds)
         token_manager.insert_token(user_id, access_token, token_expiration_date)
 
+    def discover_fresh_access_token(self, access_token):
+        data = self.debug_token(access_token)
+        self.handle_fresh_access_token(access_token, data.expires, data.user)
+
     @staticmethod
     def convert_expiration_seconds_to_date(seconds):
         return timezone.now() + timedelta(seconds=seconds)
