@@ -36,3 +36,10 @@ Add authentication backends to AUTHENTICATION_BACKENDS::
         'facebook_auth.backends.FacebookJavascriptBackend',
         ...
     )
+
+Add task to celery imports::
+
+    CELERY_IMPORTS = (
+        "facebook_auth.models",
+        ...
+    )
