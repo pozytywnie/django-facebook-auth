@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import urllib
 try:
@@ -6,6 +7,7 @@ except ImportError:
     from urlparse import parse_qs
 
 from django.conf import settings
+from django.utils import timezone
 import facepy
 
 from facebook_auth import models
@@ -89,12 +91,19 @@ class FacebookBackend(object):
         data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
         try:
             access_token = parse_qs(data)['access_token'][-1]
+            expires = parse_qs(data)['expires'][-1]
         except KeyError as e:
             logger.exception(e, extra={'facebook_response': data,
                                        'sent_args': args})
             return None
-        user = USER_FACTORY.get_user(access_token)
+        expires_at = self._timestamp_to_datetime(expires)
+        user = USER_FACTORY.get_user(access_token, expires_at)
         return user
+
+    @staticmethod
+    def _timestamp_to_datetime(timestamp):
+        naive = datetime.fromtimestamp(int(timestamp))
+        return naive.utcnow().replace(tzinfo=timezone.utc)
 
     def get_user(self, user_id):
         try:
