@@ -22,6 +22,10 @@ from facebook_auth import utils
 logger = logging.getLogger(__name__)
 
 
+class FacebookError(Exception):
+    pass
+
+
 class FacebookUser(auth_models.User):
     user_id = models.BigIntegerField(unique=True)
     app_friends = models.ManyToManyField('self')
@@ -131,8 +135,9 @@ class FacebookTokenManager(object):
         try:
             access_token = parse_qs(data)['access_token'][-1]
             expires_in_seconds = int(parse_qs(data)['expires'][-1])
-        except KeyError:
-            pass
+        except KeyError as e:
+            logger.warning('Invalid Facebook response.')
+            raise FacebookError
         return access_token, expires_in_seconds
 
     def debug_token(self, token):
@@ -161,8 +166,10 @@ class FacebookTokenManager(object):
 def insert_extended_token(access_token, user_id):
     manager = FacebookTokenManager()
     token_manager = UserTokenManager()
-    extended_access_token, expires_in_seconds = manager.get_long_lived_access_token(access_token)
-    if expires_in_seconds == 0:
-        logger.warning('Extended token did not return expiresIn')
-    token_expiration_date = manager.convert_expiration_seconds_to_date(expires_in_seconds)
-    token_manager.insert_token(user_id, extended_access_token, token_expiration_date)
+    try:
+        extended_access_token, expires_in_seconds = manager.get_long_lived_access_token(access_token)
+    except FacebookError:
+        pass
+    else:
+        token_expiration_date = manager.convert_expiration_seconds_to_date(expires_in_seconds)
+        token_manager.insert_token(user_id, extended_access_token, token_expiration_date)
