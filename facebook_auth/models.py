@@ -132,7 +132,6 @@ class FacebookTokenManager(object):
             'fb_exchange_token': access_token,
         }
         data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
-        expires_in_seconds = 0
         try:
             access_token = parse_qs(data)['access_token'][-1]
             expires_in_seconds = int(parse_qs(data)['expires'][-1])
