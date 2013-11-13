@@ -170,6 +170,17 @@ class FacebookTokenManager(object):
 
 
 @task()
+def validate_token(access_token):
+    manager = FacebookTokenManager()
+    try:
+        manager.debug_token(access_token)
+    except ValueError:
+        logger.info('Invalid access token')
+        token_manager = UserTokenManager()
+        token_manager.invalidate_access_token(access_token)
+
+
+@task()
 def insert_extended_token(access_token, user_id):
     manager = FacebookTokenManager()
     token_manager = UserTokenManager()
