@@ -147,9 +147,15 @@ class FacebookTokenManager(object):
         parsed_response = forms.parse_facebook_response(response, token)
         if parsed_response.is_valid:
             data = parsed_response.parsed_data
+            self._update_scope(data)
             return self.get_token_info(data)
         else:
             raise ValueError('Invalid Facebook response.', {'errors': parsed_response.errors})
+
+    def _update_scope(self, data):
+        if 'scopes' in data:
+            (FacebookUser.filter(user_id=data['user_id'])
+             .update(scopes=','.join(data['scopes'])))
 
     def get_token_info(self, response_data):
         return self.TokenInfo(token=response_data['token'],
