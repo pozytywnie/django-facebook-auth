@@ -11,11 +11,23 @@ class ParsedResponse(object):
         self.errors = errors
 
 
+class ListField(forms.MultiValueField):
+    def clean(self, value):
+        if hasattr(value, '__len__'):
+            self.fields = [forms.CharField(required=False)
+                           for _ in range(len(value))]
+        return super(ListField, self).clean(value)
+
+    def compress(self, data_list):
+        return data_list
+
+
 class TokenInformationForm(forms.Form):
     user_id = forms.CharField()
     token = forms.CharField()
     expires_at = forms.CharField()
     token_is_valid = forms.BooleanField()
+    scopes = ListField(required=False)
 
     def __init__(self, initial, *args, **kwargs):
         super(TokenInformationForm, self).__init__(initial, *args, **kwargs)
