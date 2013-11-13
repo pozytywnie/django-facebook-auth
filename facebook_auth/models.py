@@ -76,7 +76,7 @@ class FacebookUser(auth_models.User):
 
 class UserToken(models.Model):
     provider_user_id = models.CharField(max_length=255)
-    token = models.TextField()
+    token = models.TextField(unique=True)
     expiration_date = models.DateTimeField(blank=True, null=True)
     deleted = models.BooleanField(default=False)
 
@@ -88,9 +88,16 @@ class UserToken(models.Model):
 class UserTokenManager(object):
     @staticmethod
     def insert_token(provider_user_id, token, expiration_date):
-        UserToken.objects.get_or_create(provider_user_id=provider_user_id,
-                                        token=token,
-                                        expiration_date=expiration_date)
+        defaults = {'provider_user_id': provider_user_id,
+                    'expiration_date': expiration_date}
+        object, created = UserToken.objects.get_or_create(token=token, defaults=defaults)
+        if not created and not object.expiration_date:
+            object.expiration_date = expiration_date
+            object.save()
+        if object.expiration_date != expiration_date:
+            logger.warning('Got different expiration_date for token.')
+        if object.provider_user_id != provider_user_id:
+            logger.warning('Got different provider_user_id for token.')
 
     @staticmethod
     def get_access_token(provider_user_id):
