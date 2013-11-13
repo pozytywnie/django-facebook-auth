@@ -29,6 +29,7 @@ class FacebookError(Exception):
 class FacebookUser(auth_models.User):
     user_id = models.BigIntegerField(unique=True)
     app_friends = models.ManyToManyField('self')
+    scope = models.CharField(max_length=512, blank=True, default='')
 
     @property
     def access_token(self):
