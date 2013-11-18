@@ -13,6 +13,7 @@ from celery import task
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
+from django.dispatch import receiver
 from django.utils import timezone
 import facepy
 
@@ -160,8 +161,8 @@ class FacebookTokenManager(object):
 
     def _update_scope(self, data):
         if 'scopes' in data:
-            (FacebookUser.filter(user_id=data['user_id'])
-             .update(scopes=','.join(data['scopes'])))
+            (FacebookUser.objects.filter(user_id=data['user_id'])
+             .update(scope=','.join(data['scopes'])))
 
     def get_token_info(self, response_data):
         return self.TokenInfo(token=response_data['token'],
@@ -197,3 +198,36 @@ def insert_extended_token(access_token, user_id):
     else:
         token_expiration_date = manager.convert_expiration_seconds_to_date(expires_in_seconds)
         token_manager.insert_token(user_id, extended_access_token, token_expiration_date)
+
+
+@receiver(models.signals.post_save, sender=UserToken)
+def dispatch_engines_run(sender, instance, created, **kwargs):
+    if created:
+        debug_all_tokens_for_user.apply_async(args=[instance.provider_user_id],
+                                              countdown=45)
+
+
+@task()
+def debug_all_tokens_for_user(user_id):
+    manager = FacebookTokenManager()
+    token_manager = UserTokenManager()
+    user_tokens = UserToken.objects.filter(provider_user_id=user_id, deleted=False)
+    processed_user_tokens = []
+    for token in user_tokens:
+        processed_user_tokens.append(token.id)
+        try:
+            data = manager.debug_token(token.token)
+        except ValueError:
+            logger.info('Invalid access token')
+            token_manager.invalidate_access_token(token.token)
+        else:
+            token_manager.insert_token(user_id, data.token, data.expires)
+
+    best_token = token_manager.get_access_token(user_id)
+    if best_token.id not in processed_user_tokens:
+        logger.info('Retrying debug_all_tokens_for_user.')
+        debug_all_tokens_for_user.retry(args=[user_id],
+                                        countdown=45)
+    else:
+        logger.info('Deleting user tokens except best one.')
+        UserToken.objects.filter(id__in=processed_user_tokens).exclude(id=best_token.id).update(deleted=True)
