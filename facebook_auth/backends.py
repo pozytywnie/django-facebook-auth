@@ -93,6 +93,7 @@ class FacebookBackend(object):
             access_token = parse_qs(data)['access_token'][-1]
             expires = parse_qs(data)['expires'][-1]
         except KeyError as e:
+            args['client_secret'] = '*******%s' % args['client_secret'][-4:]
             logger.exception(e, extra={'facebook_response': data,
                                        'sent_args': args})
             return None
