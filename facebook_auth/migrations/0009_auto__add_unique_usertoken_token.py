@@ -8,6 +8,10 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        for token in orm['facebook_auth.UserToken'].objects.all():
+            orm['facebook_auth.UserToken'].objects.filter(token=token, id__gt=token.id).delete()
+        db.commit_transaction()
+        db.start_transaction()
         # Adding unique constraint on 'UserToken', fields ['token']
         db.create_unique(u'facebook_auth_usertoken', ['token'])
 

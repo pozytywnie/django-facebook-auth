@@ -7,8 +7,7 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        for token in orm['facebook_auth.UserToken'].objects.all().order_by('-expiration_date'):
-            orm['facebook_auth.UserToken'].objects.filter(token=token, expiration_date__lt=token.expiration_date).exclude(id=token.id).delete()
+        pass
 
     def backwards(self, orm):
         pass
