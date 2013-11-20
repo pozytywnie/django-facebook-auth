@@ -94,7 +94,7 @@ class UserTokenManager(object):
         object, created = UserToken.objects.get_or_create(token=token, defaults=defaults)
         if not created and expiration_date:
             if object.expiration_date > expiration_date + timedelta(seconds=30):
-                extra = {'object.expiration_date': object.expiration_date,
+                extra = {'object_expiration_date': object.expiration_date,
                          'expiration_date': expiration_date,
                          'token': token}
                 logger.warning('Got shorter expiration_date', extra=extra)
@@ -102,7 +102,7 @@ class UserTokenManager(object):
             object.save()
 
         if object.provider_user_id != provider_user_id:
-            extra = {'object.provider_user_id': object.provider_user_id,
+            extra = {'object_provider_user_id': object.provider_user_id,
                      'provider_user_id': provider_user_id,
                      'provider_user_id_type': type(provider_user_id)}
             logger.warning('Got different provider_user_id for token.', extra=extra)
