@@ -92,13 +92,20 @@ class UserTokenManager(object):
         defaults = {'provider_user_id': provider_user_id,
                     'expiration_date': expiration_date}
         object, created = UserToken.objects.get_or_create(token=token, defaults=defaults)
-        if not created and not object.expiration_date:
+        if not created and expiration_date:
+            if object.expiration_date > expiration_date + timedelta(seconds=30):
+                extra = {'object.expiration_date': object.expiration_date,
+                         'expiration_date': expiration_date,
+                         'token': token}
+                logger.warning('Got shorter expiration_date', extra=extra)
             object.expiration_date = expiration_date
             object.save()
-        if object.expiration_date != expiration_date:
-            logger.warning('Got different expiration_date for token.')
+
         if object.provider_user_id != provider_user_id:
-            logger.warning('Got different provider_user_id for token.')
+            extra = {'object.provider_user_id': object.provider_user_id,
+                     'provider_user_id': provider_user_id,
+                     'provider_user_id_type': type(provider_user_id)}
+            logger.warning('Got different provider_user_id for token.', extra=extra)
 
     @staticmethod
     def get_access_token(provider_user_id):
