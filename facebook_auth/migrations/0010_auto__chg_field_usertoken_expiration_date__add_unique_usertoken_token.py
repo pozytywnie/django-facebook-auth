@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Changing field 'UserToken.expiration_date'
-        db.alter_column(u'facebook_auth_usertoken', 'expiration_date', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2013, 11, 18, 0, 0)))
+        db.alter_column(u'facebook_auth_usertoken', 'expiration_date', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(1990, 10, 10, 0, 0)))
 
     def backwards(self, orm):
         # Changing field 'UserToken.expiration_date'
