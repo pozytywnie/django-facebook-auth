@@ -111,7 +111,7 @@ class FacebookBackend(object):
     @staticmethod
     def _timestamp_to_datetime(timestamp):
         naive = datetime.fromtimestamp(int(timestamp))
-        return naive.utcnow().replace(tzinfo=timezone.utc)
+        return naive.replace(tzinfo=timezone.utc)
 
     def get_user(self, user_id):
         try:

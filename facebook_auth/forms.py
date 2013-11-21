@@ -44,7 +44,7 @@ class TokenInformationForm(forms.Form):
     def clean_expires_at(self):
         timestamp = self.data['expires_at']
         naive = datetime.fromtimestamp(int(timestamp))
-        return naive.utcnow().replace(tzinfo=timezone.utc)
+        return naive.replace(tzinfo=timezone.utc)
 
 
 def parse_facebook_response(raw_response, token):
