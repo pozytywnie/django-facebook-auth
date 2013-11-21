@@ -28,7 +28,7 @@ def _truncate(word, length, to_zero=False):
 
 class UserFactory(object):
     graph_api_class = ObservableGraphAPI
-    fallback_expiration_date = datetime(1990, 10, 10, 0, 0, 1)
+    fallback_expiration_date = datetime(1990, 10, 10, 0, 0, 1).replace(tzinfo=timezone.utc)
 
     def __create_username(self, profile):
             return profile['id'] # TODO better username

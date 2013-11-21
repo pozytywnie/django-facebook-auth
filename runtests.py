@@ -16,6 +16,7 @@ if not settings.configured:
                 'NAME': 'facebook_auth-test-database',
             }
         },
+        USE_TZ = True,
         BROKER_URL = 'django://',
         PROJECT_APPS = PROJECT_APPS,
         INSTALLED_APPS = (
