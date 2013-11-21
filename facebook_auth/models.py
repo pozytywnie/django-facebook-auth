@@ -173,7 +173,7 @@ class FacebookTokenManager(object):
 
     def get_token_info(self, response_data):
         return self.TokenInfo(token=response_data['token'],
-                              user=response_data['user_id'],
+                              user=str(response_data['user_id']),
                               expires=response_data['expires_at'])
 
     @staticmethod
