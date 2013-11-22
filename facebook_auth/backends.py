@@ -1,6 +1,9 @@
 from datetime import datetime
 import logging
 import urllib
+
+from facebook_auth.graph_api import ObservableGraphAPI
+
 try:
     from urllib.parse import parse_qs
 except ImportError:
@@ -24,7 +27,7 @@ def _truncate(word, length, to_zero=False):
 
 
 class UserFactory(object):
-    graph_api_class = facepy.GraphAPI
+    graph_api_class = ObservableGraphAPI
     fallback_expiration_date = datetime(1990, 10, 10, 0, 0, 1)
 
     def __create_username(self, profile):

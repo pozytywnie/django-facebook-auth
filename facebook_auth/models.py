@@ -15,9 +15,9 @@ from django.contrib.auth import models as auth_models
 from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
-import facepy
 
 from facebook_auth import forms
+from facebook_auth import graph_api
 from facebook_auth import utils
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def graph(self):
-        return facepy.GraphAPI(self.access_token)
+        return graph_api.ObservableGraphAPI(self.access_token)
 
     @property
     def js_session(self):
@@ -156,7 +156,7 @@ class FacebookTokenManager(object):
         return access_token, expires_in_seconds
 
     def debug_token(self, token):
-        graph = self._get_application_graph()
+        graph = utils.get_application_graph()
         response = graph.get('/debug_token', input_token=token)
         parsed_response = forms.parse_facebook_response(response, token)
         if parsed_response.is_valid:
@@ -175,12 +175,6 @@ class FacebookTokenManager(object):
         return self.TokenInfo(token=response_data['token'],
                               user=str(response_data['user_id']),
                               expires=response_data['expires_at'])
-
-    @staticmethod
-    def _get_application_graph():
-        token = facepy.utils.get_application_access_token(settings.FACEBOOK_APP_ID,
-                                                          settings.FACEBOOK_APP_SECRET)
-        return facepy.GraphAPI(token)
 
 
 @task()
