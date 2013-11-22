@@ -89,7 +89,8 @@ class UserToken(models.Model):
 class UserTokenManager(object):
     @staticmethod
     def insert_token(provider_user_id, token, expiration_date):
-        defaults = {'provider_user_id': str(provider_user_id),
+        provider_user_id = str(provider_user_id)
+        defaults = {'provider_user_id': provider_user_id,
                     'expiration_date': expiration_date}
         object, created = UserToken.objects.get_or_create(token=token, defaults=defaults)
         if not created and expiration_date:
