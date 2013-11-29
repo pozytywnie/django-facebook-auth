@@ -48,7 +48,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def graph(self):
-        return graph_api.ObservableGraphAPI(self.access_token)
+        return graph_api.ObservableGraphAPI(self._get_token_object().token)
 
     @property
     def js_session(self):
