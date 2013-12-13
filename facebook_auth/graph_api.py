@@ -86,7 +86,7 @@ class FacebookConnectionObservers(object):
 
 
 class RequestInfo(object):
-    def __init__(self, url, method, **kwargs):
+    def __init__(self, method, url, **kwargs):
         self.url = url
         self.method = method
         self.kwargs = kwargs
