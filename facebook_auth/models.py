@@ -225,11 +225,15 @@ def debug_all_tokens_for_user(user_id):
         else:
             token_manager.insert_token(user_id, data.token, data.expires)
 
-    best_token = token_manager.get_access_token(user_id)
-    if best_token.id not in processed_user_tokens:
-        logger.info('Retrying debug_all_tokens_for_user.')
-        debug_all_tokens_for_user.retry(args=[user_id],
-                                        countdown=45)
+    try:
+        best_token = token_manager.get_access_token(user_id)
+    except UserToken.DoesNotExist:
+        pass
     else:
-        logger.info('Deleting user tokens except best one.')
-        UserToken.objects.filter(id__in=processed_user_tokens).exclude(id=best_token.id).update(deleted=True)
+        if best_token.id not in processed_user_tokens:
+            logger.info('Retrying debug_all_tokens_for_user.')
+            debug_all_tokens_for_user.retry(args=[user_id],
+                                            countdown=45)
+        else:
+            logger.info('Deleting user tokens except best one.')
+            UserToken.objects.filter(id__in=processed_user_tokens).exclude(id=best_token.id).update(deleted=True)
