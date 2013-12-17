@@ -104,8 +104,8 @@ class FacebookBackend(object):
             expires = parse_qs(data)['expires'][-1]
         except KeyError as e:
             args['client_secret'] = '*******%s' % args['client_secret'][-4:]
-            logger.exception(e, extra={'facebook_response': data,
-                                       'sent_args': args})
+            logger.error(e, extra={'facebook_response': data,
+                                   'sent_args': args})
             return None
         expires_at = self._timestamp_to_datetime(expires)
         user = USER_FACTORY.get_user(access_token, expires_at)
