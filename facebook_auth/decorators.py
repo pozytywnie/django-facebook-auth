@@ -11,12 +11,13 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import login
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
+from django.utils.encoding import force_text
 from django.utils import html
 
 
 def get_auth_address(request, redirect_to, scope='', state=None):
     if not state:
-        state = unicode(uuid1())
+        state = force_text(uuid1())
         auth_requests = request.session.get('auth_requests', {})
         if len(auth_requests) >= 20:
             auth_requests = {}
