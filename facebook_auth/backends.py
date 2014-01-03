@@ -5,14 +5,13 @@ from facebook_auth.graph_api import ObservableGraphAPI
 
 try:
     import urllib.parse as urlparse
-    from urllib.request import urlopen
 except ImportError:
     import urlparse
-    from urllib2 import urlopen
 
 from django.conf import settings
 from django.utils import timezone
 import facepy
+from facepy import exceptions
 
 from facebook_auth import models
 from facebook_auth import utils
@@ -92,14 +91,21 @@ USER_FACTORY = UserFactory()
 
 class FacebookBackend(object):
     def authenticate(self, code=None, redirect_uri=None):
-        url_base = 'https://graph.facebook.com/oauth/access_token?'
+        graph = ObservableGraphAPI()
         args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'client_secret': settings.FACEBOOK_APP_SECRET,
             'redirect_uri': redirect_uri,
             'code': code
         }
-        data = urlopen(url_base + urlparse.urlencode(args)).read()
+        try:
+            data = graph.get('/oauth/access_token', **args)
+        except exceptions.FacebookError:
+            logger.warning("Facebook login failed")
+            return None
+        except exceptions.FacepyError:
+            logger.warning("Facebook login connection error")
+            return None
         try:
             access_token = urlparse.parse_qs(data)['access_token'][-1]
             expires = urlparse.parse_qs(data)['expires'][-1]
