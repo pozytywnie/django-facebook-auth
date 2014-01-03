@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
 import re
-import urllib
 from uuid import uuid1
+
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 
 from django.conf import settings
 from django import http
@@ -39,7 +43,7 @@ def get_auth_address(request, redirect_to, scope='', state=None):
             'scope': scope,
             'state': state,
     }
-    return 'https://www.facebook.com/dialog/oauth?' + urllib.urlencode(args)
+    return 'https://www.facebook.com/dialog/oauth?' + urlparse.urlencode(args)
 
 
 def use_fallback(get):

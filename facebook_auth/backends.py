@@ -1,13 +1,14 @@
 from datetime import datetime
 import logging
-import urllib
 
 from facebook_auth.graph_api import ObservableGraphAPI
 
 try:
-    from urllib.parse import parse_qs
+    import urllib.parse as urlparse
+    from urllib.request import urlopen
 except ImportError:
-    from urlparse import parse_qs
+    import urlparse
+    from urllib2 import urlopen
 
 from django.conf import settings
 from django.utils import timezone
@@ -98,10 +99,10 @@ class FacebookBackend(object):
             'redirect_uri': redirect_uri,
             'code': code
         }
-        data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
+        data = urlopen(url_base + urlparse.urlencode(args)).read()
         try:
-            access_token = parse_qs(data)['access_token'][-1]
-            expires = parse_qs(data)['expires'][-1]
+            access_token = urlparse.parse_qs(data)['access_token'][-1]
+            expires = urlparse.parse_qs(data)['expires'][-1]
         except KeyError as e:
             args['client_secret'] = '*******%s' % args['client_secret'][-4:]
             logger.error(e, extra={'facebook_response': data,

@@ -5,9 +5,12 @@ import logging
 import urllib
 
 try:
-    from urllib.parse import parse_qs
+    import urllib.parse as urlparse
+    from urllib.request import urlopen
 except ImportError:
-    from urlparse import parse_qs
+    import urlparse
+    from urllib2 import urlopen
+
 
 from celery import task
 from django.conf import settings
@@ -147,10 +150,10 @@ class FacebookTokenManager(object):
             'grant_type': 'fb_exchange_token',
             'fb_exchange_token': access_token,
         }
-        data = urllib.urlopen(url_base + urllib.urlencode(args)).read()
+        data = urlopen(url_base + urlparse.urlencode(args)).read()
         try:
-            access_token = parse_qs(data)['access_token'][-1]
-            expires_in_seconds = int(parse_qs(data)['expires'][-1])
+            access_token = urlparse.parse_qs(data)['access_token'][-1]
+            expires_in_seconds = int(urlparse.parse_qs(data)['expires'][-1])
         except KeyError as e:
             logger.warning('Invalid Facebook response.')
             raise FacebookError
