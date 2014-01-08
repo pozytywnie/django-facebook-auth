@@ -81,7 +81,7 @@ class UserFactoryOnErrorTest(TestCase):
         factory = TestUserFactory()
         factory.graph_api_class = graph_api_class
         user = factory.get_user("123")
-        self.assertEquals(123, user.user_id)
+        self.assertEqual(123, user.user_id)
 
         with Stub() as graph_api_class:
             graph_api_class("123").get >> raise_FB_error
@@ -90,7 +90,7 @@ class UserFactoryOnErrorTest(TestCase):
         factory = TestUserFactory()
         factory.graph_api_class = graph_api_class
         user = factory.get_user("123")
-        self.assertEquals(123, user.user_id)
+        self.assertEqual(123, user.user_id)
 
         with Stub() as graph_api_class:
             graph_api_class("123").get >> raise_FB_error
