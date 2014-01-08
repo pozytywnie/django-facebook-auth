@@ -2,14 +2,15 @@ import collections
 from datetime import timedelta
 import json
 import logging
-import urllib
 
 try:
     import urllib.parse as urlparse
     from urllib.request import urlopen
+    from urllib.parse import urlencode
 except ImportError:
     import urlparse
     from urllib2 import urlopen
+    from urllib import urlencode
 
 
 from celery import task
@@ -150,7 +151,7 @@ class FacebookTokenManager(object):
             'grant_type': 'fb_exchange_token',
             'fb_exchange_token': access_token,
         }
-        data = urlopen(url_base + urlparse.urlencode(args)).read()
+        data = urlopen(url_base + urlencode(args)).read()
         try:
             access_token = urlparse.parse_qs(data)['access_token'][-1]
             expires_in_seconds = int(urlparse.parse_qs(data)['expires'][-1])
