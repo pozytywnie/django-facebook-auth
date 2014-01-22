@@ -100,7 +100,7 @@ class FacebookBackend(object):
         }
         try:
             data = graph.get('/oauth/access_token', **args)
-        except exceptions.FacebookError:
+        except exceptions.FacebookError as e:
             message = "Facebook login failed %s" % e.message
             code_used_message = 'This authorization code has been used.'
             if e.code == 100 and e.message == code_used_message:
