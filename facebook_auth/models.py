@@ -100,18 +100,18 @@ class UserTokenManager(object):
         provider_user_id = str(provider_user_id)
         defaults = {'provider_user_id': provider_user_id,
                     'expiration_date': expiration_date}
-        object, created = UserToken.objects.get_or_create(
+        obj, created = UserToken.objects.get_or_create(
             token=token, defaults=defaults)
         if not created and expiration_date:
-            if object.expiration_date > expiration_date + timedelta(seconds=30):
-                extra = {'object_expiration_date': object.expiration_date,
+            if obj.expiration_date > expiration_date + timedelta(seconds=30):
+                extra = {'object_expiration_date': obj.expiration_date,
                          'expiration_date': expiration_date,
                          'token': token}
                 logger.warning('Got shorter expiration_date', extra=extra)
-            object.expiration_date = expiration_date
-            object.save()
+            obj.expiration_date = expiration_date
+            obj.save()
 
-        if object.provider_user_id != provider_user_id:
+        if obj.provider_user_id != provider_user_id:
             extra = {'object_provider_user_id': object.provider_user_id,
                      'provider_user_id': provider_user_id,
                      'provider_user_id_type': type(provider_user_id)}
