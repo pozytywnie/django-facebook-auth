@@ -4,11 +4,13 @@ import json
 import logging
 
 try:
+    from urllib.error import HTTPError
     import urllib.parse as urlparse
     from urllib.request import urlopen
     from urllib.parse import urlencode
 except ImportError:
     import urlparse
+    from urllib2 import HTTPError
     from urllib2 import urlopen
     from urllib import urlencode
 
@@ -199,7 +201,7 @@ def insert_extended_token(access_token, user_id):
     token_manager = UserTokenManager()
     try:
         extended_access_token, expires_in_seconds = manager.get_long_lived_access_token(access_token)
-    except FacebookError:
+    except (FacebookError, HTTPError):
         pass
     else:
         token_expiration_date = manager.convert_expiration_seconds_to_date(expires_in_seconds)
