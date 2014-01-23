@@ -157,7 +157,7 @@ class FacebookTokenManager(object):
         try:
             access_token = urlparse.parse_qs(data)['access_token'][-1]
             expires_in_seconds = int(urlparse.parse_qs(data)['expires'][-1])
-        except KeyError as e:
+        except KeyError:
             logger.warning('Invalid Facebook response.')
             raise FacebookError
         return access_token, expires_in_seconds
