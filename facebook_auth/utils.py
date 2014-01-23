@@ -16,6 +16,6 @@ def get_from_graph_api(graphAPI, query):
 
 
 def get_application_graph():
-    token = facepy.utils.get_application_access_token(settings.FACEBOOK_APP_ID,
-                                                      settings.FACEBOOK_APP_SECRET)
+    token = facepy.utils.get_application_access_token(
+            settings.FACEBOOK_APP_ID, settings.FACEBOOK_APP_SECRET)
     return ObservableGraphAPI(token)

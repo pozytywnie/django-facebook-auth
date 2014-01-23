@@ -28,38 +28,44 @@ def _truncate(word, length, to_zero=False):
 
 class UserFactory(object):
     graph_api_class = ObservableGraphAPI
-    fallback_expiration_date = datetime(1990, 10, 10, 0, 0, 1).replace(tzinfo=timezone.utc)
+    fallback_expiration_date = datetime(1990, 10, 10, 0, 0, 1).replace(
+        tzinfo=timezone.utc)
 
     def __create_username(self, profile):
-            return profile['id'] # TODO better username
+            return profile['id']  # TODO better username
 
     def _product_user(self, access_token, profile, token_expiration_date=None):
-        token_expiration_date = token_expiration_date or self._get_fallback_expiration_date()
+        token_expiration_date = (token_expiration_date or
+                                 self._get_fallback_expiration_date())
         user_id = int(profile['id'])
         username = self.__create_username(profile)
-        user, created = models.FacebookUser.objects.get_or_create(user_id=user_id,
-                                                                  username=username)
+        user, created = models.FacebookUser.objects.get_or_create(
+                user_id=user_id, username=username)
         if created:
             user.set_unusable_password()
 
         def copy_field(field, to_zero=False):
             if field in profile:
                 length = user._meta.get_field_by_name(field)[0].max_length
-                setattr(user, field, _truncate(profile[field], length, to_zero=to_zero))
+                setattr(user, field, _truncate(profile[field], length,
+                        to_zero=to_zero))
 
         copy_field('email', True)
         copy_field('first_name')
         copy_field('last_name')
         if access_token is not None:
-            models.FacebookTokenManager().insert_token(access_token, token_expiration_date, str(user.user_id))
+            models.FacebookTokenManager().insert_token(
+                access_token, token_expiration_date, str(user.user_id))
         user.save()
         self.create_profile_object(profile, user)
         return user
 
     def get_user(self, access_token, token_expiration_date=None):
-        token_expiration_date = token_expiration_date or self._get_fallback_expiration_date()
+        token_expiration_date = (token_expiration_date or
+                                 self._get_fallback_expiration_date())
         try:
-            profile = utils.get_from_graph_api(self.graph_api_class(access_token), 'me')
+            profile = utils.get_from_graph_api(
+                self.graph_api_class(access_token), 'me')
         except facepy.FacepyError:
             return None
         return self._product_user(access_token, profile, token_expiration_date)
@@ -79,7 +85,8 @@ class UserFactory(object):
             parser = profile_parser.FacebookDataParser(profile, True, True)
             try:
                 data = parser.run()
-                profile = profile_models.FacebookUserProfile.objects.create_or_update(data)
+                profile = (profile_models.FacebookUserProfile
+                           .objects.create_or_update(data))
                 profile.user = user
                 profile.save()
             except profile_parser.FacebookDataParserCriticalError:

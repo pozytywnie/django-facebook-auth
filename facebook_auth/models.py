@@ -74,8 +74,10 @@ class FacebookUser(auth_models.User):
     def update_app_friends(self):
         friends = self.friends
         friends_ids = [f['id'] for f in friends]
-        existing_friends = self.app_friends.all().values_list('user_id', flat=True)
-        new_friends = FacebookUser.objects.filter(user_id__in=friends_ids).exclude(user_id__in=existing_friends)
+        existing_friends = self.app_friends.all().values_list(
+            'user_id', flat=True)
+        new_friends = FacebookUser.objects.filter(
+            user_id__in=friends_ids).exclude(user_id__in=existing_friends)
         removed_friends = self.app_friends.exclude(user_id__in=friends_ids)
         self.app_friends.add(*new_friends)
         self.app_friends.remove(*removed_friends)
@@ -98,7 +100,8 @@ class UserTokenManager(object):
         provider_user_id = str(provider_user_id)
         defaults = {'provider_user_id': provider_user_id,
                     'expiration_date': expiration_date}
-        object, created = UserToken.objects.get_or_create(token=token, defaults=defaults)
+        object, created = UserToken.objects.get_or_create(
+            token=token, defaults=defaults)
         if not created and expiration_date:
             if object.expiration_date > expiration_date + timedelta(seconds=30):
                 extra = {'object_expiration_date': object.expiration_date,
@@ -112,7 +115,8 @@ class UserTokenManager(object):
             extra = {'object_provider_user_id': object.provider_user_id,
                      'provider_user_id': provider_user_id,
                      'provider_user_id_type': type(provider_user_id)}
-            logger.warning('Got different provider_user_id for token.', extra=extra)
+            logger.warning('Got different provider_user_id for token.',
+                           extra=extra)
 
     @staticmethod
     def get_access_token(provider_user_id):
@@ -127,14 +131,16 @@ class UserTokenManager(object):
 
 
 class FacebookTokenManager(object):
-    TokenInfo = collections.namedtuple('TokenInfo', ['user', 'expires', 'token'])
+    TokenInfo = collections.namedtuple('TokenInfo',
+                                       ['user', 'expires', 'token'])
 
     @staticmethod
     def insert_token(access_token, token_expiration_date, user_id):
         token_manager = UserTokenManager()
         if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
             insert_extended_token.delay(access_token, user_id)
-        token_manager.insert_token(user_id, access_token, token_expiration_date)
+        token_manager.insert_token(user_id, access_token,
+                                   token_expiration_date)
 
     def discover_fresh_access_token(self, access_token):
         data = self.debug_token(access_token)
@@ -171,7 +177,8 @@ class FacebookTokenManager(object):
             self._update_scope(data)
             return self.get_token_info(data)
         else:
-            raise ValueError('Invalid Facebook response.', {'errors': parsed_response.errors})
+            raise ValueError('Invalid Facebook response.',
+                             {'errors': parsed_response.errors})
 
     def _update_scope(self, data):
         if 'scopes' in data:
@@ -200,12 +207,15 @@ def insert_extended_token(access_token, user_id):
     manager = FacebookTokenManager()
     token_manager = UserTokenManager()
     try:
-        extended_access_token, expires_in_seconds = manager.get_long_lived_access_token(access_token)
+        access_token, expires_in_seconds = manager.get_long_lived_access_token(
+            access_token)
     except (FacebookError, HTTPError):
         pass
     else:
-        token_expiration_date = manager.convert_expiration_seconds_to_date(expires_in_seconds)
-        token_manager.insert_token(user_id, extended_access_token, token_expiration_date)
+        token_expiration_date = manager.convert_expiration_seconds_to_date(
+            expires_in_seconds)
+        token_manager.insert_token(user_id, access_token,
+                                   token_expiration_date)
 
 
 @receiver(models.signals.post_save, sender=UserToken)
@@ -219,7 +229,8 @@ def dispatch_engines_run(sender, instance, created, **kwargs):
 def debug_all_tokens_for_user(user_id):
     manager = FacebookTokenManager()
     token_manager = UserTokenManager()
-    user_tokens = UserToken.objects.filter(provider_user_id=user_id, deleted=False)
+    user_tokens = UserToken.objects.filter(provider_user_id=user_id,
+        deleted=False)
     processed_user_tokens = []
     for token in user_tokens:
         processed_user_tokens.append(token.id)
@@ -242,4 +253,5 @@ def debug_all_tokens_for_user(user_id):
                                             countdown=45)
         else:
             logger.info('Deleting user tokens except best one.')
-            UserToken.objects.filter(id__in=processed_user_tokens).exclude(id=best_token.id).update(deleted=True)
+            UserToken.objects.filter(id__in=processed_user_tokens).exclude(
+                id=best_token.id).update(deleted=True)

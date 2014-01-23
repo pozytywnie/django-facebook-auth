@@ -58,20 +58,26 @@ def accept_login(fallback_template=None, scope=''):
             state = request.GET.get('state', None)
             code = request.GET.get('code', None)
             if state and code:
-                old_request = request.session.get('auth_requests', {}).get(state, None)
+                old_request = request.session.get('auth_requests', {}).get(
+                    state, None)
                 if old_request and old_request['path'] == request.path:
                     request.method = old_request['method']
                     request.POST = old_request['POST']
                     del request.session['auth_requests'][state]
                     request.session.modified = True
-                    user = authenticate(code=code, redirect_uri=request.build_absolute_uri(request.path))
+                    user = authenticate(
+                        code=code,
+                        redirect_uri=request.build_absolute_uri(request.path))
                     if user:
                         login(request, user)
                 if request.method != 'POST':
-                    return HttpResponseRedirect(request.build_absolute_uri(request.path))
+                    return HttpResponseRedirect(
+                        request.build_absolute_uri(request.path))
             if fallback_template and state and use_fallback(request.GET):
-                url = get_auth_address(request, request.build_absolute_uri(request.path), state=state)
-                return TemplateResponse(request, fallback_template, context={'url': url})
+                url = get_auth_address(request, request.build_absolute_uri(
+                    request.path), state=state)
+                return TemplateResponse(request, fallback_template,
+                    context={'url': url})
             return fun(request, *args, **kwargs)
         return res
     return decorator
@@ -84,13 +90,18 @@ def login_required(scope='', return_view_content=False):
             if request.user.is_authenticated():
                 return fun(request, *args, **kwargs)
             else:
-                url = get_auth_address(request, request.build_absolute_uri(request.path), scope)
+                url = get_auth_address(request, request.build_absolute_uri(
+                    request.path), scope)
                 if return_view_content:
                     response = fun(request, *args, **kwargs)
                 else:
-                    response = http.HttpResponse("<html><head><title></title></head><body></body></html>")
-                redirect = "<script>window.top.location=\"%(url)s\";</script>" % dict(url=html.escapejs(url))
-                response.content = re.sub("<body(.*?)>", "<body\\1>" + redirect, response.content)
+                    response = http.HttpResponse(
+                        "<html><head><title></title></head><body></body>"
+                        "</html>")
+                redirect = ("<script>window.top.location=\"%(url)s\";"
+                            "</script>" % dict(url=html.escapejs(url)))
+                response.content = re.sub(
+                    "<body(.*?)>", "<body\\1>" + redirect, response.content)
                 return response
         return res
     return decorator
