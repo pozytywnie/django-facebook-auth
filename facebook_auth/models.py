@@ -6,13 +6,9 @@ import logging
 try:
     from urllib.error import HTTPError
     import urllib.parse as urlparse
-    from urllib.request import urlopen
-    from urllib.parse import urlencode
 except ImportError:
     import urlparse
     from urllib2 import HTTPError
-    from urllib2 import urlopen
-    from urllib import urlencode
 
 
 from celery import task
@@ -152,14 +148,14 @@ class FacebookTokenManager(object):
 
     @staticmethod
     def get_long_lived_access_token(access_token):
-        url_base = 'https://graph.facebook.com/oauth/access_token?'
+        graph = graph_api.ObservableGraphAPI()
         args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'client_secret': settings.FACEBOOK_APP_SECRET,
             'grant_type': 'fb_exchange_token',
             'fb_exchange_token': access_token,
         }
-        data = urlopen(url_base + urlencode(args)).read()
+        data = graph.get('/oauth/access_token', **args)
         try:
             access_token = urlparse.parse_qs(data)['access_token'][-1]
             expires_in_seconds = int(urlparse.parse_qs(data)['expires'][-1])
