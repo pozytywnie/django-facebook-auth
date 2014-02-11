@@ -80,9 +80,9 @@ class FacebookConnectionObservers(object):
 
     def finalize(self):
         for observer_class in GRAPH_OBSERVER_CLASSES:
-            observer = observer_class()
-            observer.handle_facebook_communication(
+            observer = observer_class(
                 self.request, self.response, self.error)
+            observer.handle_facebook_communication()
 
 
 class RequestInfo(object):

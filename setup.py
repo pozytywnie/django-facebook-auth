@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from distutils.core import setup
+from setuptools import setup
 
 
 def read(name):
@@ -8,7 +8,7 @@ def read(name):
 
 setup(
     name='django-facebook-auth',
-    version='3.4.5',
+    version='3.4.6',
     description="Authorisation app for Facebook API.",
     long_description=read("README.rst"),
     maintainer="Tomasz Wysocki",
