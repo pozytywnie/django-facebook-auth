@@ -11,12 +11,14 @@ except ImportError:
     from urllib2 import HTTPError
 
 
-from celery import task
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
+
+from celery import task
+from facepy import exceptions
 
 from facebook_auth import forms
 from facebook_auth import graph_api
@@ -205,7 +207,7 @@ def insert_extended_token(access_token, user_id):
     try:
         access_token, expires_in_seconds = manager.get_long_lived_access_token(
             access_token)
-    except (FacebookError, HTTPError):
+    except (exceptions.FacebookError, FacebookError, HTTPError):
         pass
     else:
         token_expiration_date = manager.convert_expiration_seconds_to_date(
