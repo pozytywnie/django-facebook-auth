@@ -1,15 +1,15 @@
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 from django.test.testcases import TestCase
+
 from facepy.exceptions import FacebookError
-from ludibrio import Stub
 
-from backends import _truncate as truncate
-from backends import UserFactory
+from facebook_auth.backends import _truncate as truncate
+from facebook_auth.backends import UserFactory
 
-class TestUserFactory(UserFactory):
-    def _get_access_token_expiration_date(self, access_token):
-        return None
-
-TEST_USER_FACTORY = TestUserFactory()
 
 class TruncaterTest(TestCase):
     def test_empty(self):
@@ -36,6 +36,7 @@ class TruncaterTest(TestCase):
         self.assertEqual('', truncate(word, 3, to_zero=True))
         self.assertEqual('', truncate(word, 0, to_zero=True))
 
+
 class UserFactoryTest(TestCase):
     def test_empty(self):
         profile = {
@@ -44,7 +45,7 @@ class UserFactoryTest(TestCase):
             'last_name': '',
             'email': ''
         }
-        TEST_USER_FACTORY._product_user('', profile).save()
+        UserFactory()._product_user('', profile).save()
 
     def test_no_email(self):
         profile = {
@@ -52,7 +53,7 @@ class UserFactoryTest(TestCase):
             'first_name': '',
             'last_name': '',
         }
-        TEST_USER_FACTORY._product_user('', profile).save()
+        UserFactory()._product_user('', profile).save()
 
     def test_to_long(self):
         profile = {
@@ -61,7 +62,7 @@ class UserFactoryTest(TestCase):
             'last_name': 'a' * 1000,
             'email': 'a' * 1000
         }
-        user = TEST_USER_FACTORY._product_user('', profile)
+        user = UserFactory()._product_user('', profile)
         user.save()
 
         def get_length(field):
@@ -71,32 +72,30 @@ class UserFactoryTest(TestCase):
         self.assertEqual(user.last_name, 'a' * get_length('last_name'))
         self.assertEqual(user.email, '')
 
+
 class UserFactoryOnErrorTest(TestCase):
     def test(self):
-        def raise_FB_error(*args, **kwargs):
-            raise FacebookError("msg", 1)
-
-        with Stub() as graph_api_class:
-            graph_api_class("123").get('me') >> {'id': '123'}
-        factory = TestUserFactory()
-        factory.graph_api_class = graph_api_class
+        factory = UserFactory()
+        factory.graph_api_class = mock.Mock()
+        factory.graph_api_class.return_value.get.return_value = {'id': '123'}
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
-        with Stub() as graph_api_class:
-            graph_api_class("123").get >> raise_FB_error
-            graph_api_class("123").get >> raise_FB_error
-            graph_api_class("123").get('me') >> {'id': '123'}
-        factory = TestUserFactory()
-        factory.graph_api_class = graph_api_class
+        factory = UserFactory()
+        factory.graph_api_class = mock.Mock()
+        factory.graph_api_class.return_value.get.side_effect = [
+            FacebookError("msg", 1),
+            FacebookError("msg", 1),
+            {'id': '123'}]
+
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
-        with Stub() as graph_api_class:
-            graph_api_class("123").get >> raise_FB_error
-            graph_api_class("123").get >> raise_FB_error
-            graph_api_class("123").get >> raise_FB_error
-            graph_api_class("123").get('me') >> {'id': '123'}
-        factory = TestUserFactory()
-        factory.graph_api_class = graph_api_class
+        factory = UserFactory()
+        factory.graph_api_class = mock.Mock()
+        factory.graph_api_class.return_value.get.side_effect = [
+            FacebookError("msg", 1),
+            FacebookError("msg", 1),
+            FacebookError("msg", 1),
+            {'id': '123'}]
         self.assertEqual(None, factory.get_user("123"))

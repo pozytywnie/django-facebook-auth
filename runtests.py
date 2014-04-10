@@ -1,8 +1,7 @@
-import os
 import sys
 
 from django.conf import settings
-from django.core.management import execute_manager
+from django.core.management import execute_from_command_line
 import djcelery
 
 if not settings.configured:
@@ -40,5 +39,4 @@ if not settings.configured:
     )
 
 djcelery.setup_loader()
-sys.argv += ['jenkins']
-execute_manager(settings)
+execute_from_command_line(sys.argv + ['jenkins'])
