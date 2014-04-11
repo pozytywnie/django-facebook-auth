@@ -4,6 +4,9 @@ from django.conf import settings
 from django.core.management import execute_from_command_line
 import djcelery
 
+LEGACY = len(sys.argv) == 2 and sys.argv[1] == 'legacy'
+OUTPUT_DIR = 'reports' if LEGACY else 'reports3.3'
+
 if not settings.configured:
     PROJECT_APPS = (
         'facebook_auth',
@@ -32,11 +35,11 @@ if not settings.configured:
         ROOT_URLCONF = 'facebook_auth.urls',
         JENKINS_TASKS = (
             'django_jenkins.tasks.with_coverage',
-            'django_jenkins.tasks.django_tests',
             'django_jenkins.tasks.run_pep8',
             'django_jenkins.tasks.run_pyflakes',
-        )
+        ) + ('django_jenkins.tasks.django_tests',) if LEGACY else ()
     )
 
 djcelery.setup_loader()
-execute_from_command_line(sys.argv + ['jenkins'])
+execute_from_command_line(['runtests.py', 'jenkins',
+                           '--output-dir', OUTPUT_DIR])
