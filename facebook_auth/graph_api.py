@@ -13,8 +13,13 @@ def get_class(class_name):
     module = importlib.import_module(module_name)
     return getattr(module, class_name)
 
+
+def get_graph_observer_classes(graph_observers):
+    return map(get_class, graph_observers)
+
+
 FACEBOOK_GRAPH_OBSERVERS = getattr(settings, 'FACEBOOK_GRAPH_OBSERVERS', [])
-GRAPH_OBSERVER_CLASSES = map(get_class, FACEBOOK_GRAPH_OBSERVERS)
+GRAPH_OBSERVER_CLASSES = get_graph_observer_classes(FACEBOOK_GRAPH_OBSERVERS)
 
 
 logger = logging.getLogger(__name__)
