@@ -15,7 +15,7 @@ def get_class(class_name):
 
 
 def get_graph_observer_classes(graph_observers):
-    return map(get_class, graph_observers)
+    return list(map(get_class, graph_observers))
 
 
 FACEBOOK_GRAPH_OBSERVERS = getattr(settings, 'FACEBOOK_GRAPH_OBSERVERS', [])
