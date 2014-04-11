@@ -1,17 +1,20 @@
 try:
     from unittest import mock
+    MOCK_CLASS_NAME = 'unittest.mock.Mock'
 except ImportError:
     import mock
+    MOCK_CLASS_NAME = 'mock.Mock'
 
-from django.test.testcases import TestCase
+from django import test
 
 from facepy.exceptions import FacebookError
 
 from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
+from facebook_auth import graph_api
 
 
-class TruncaterTest(TestCase):
+class TruncaterTest(test.SimpleTestCase):
     def test_empty(self):
         self.assertEqual('', truncate('', 30))
 
@@ -37,7 +40,7 @@ class TruncaterTest(TestCase):
         self.assertEqual('', truncate(word, 0, to_zero=True))
 
 
-class UserFactoryTest(TestCase):
+class UserFactoryTest(test.TestCase):
     def test_empty(self):
         profile = {
             'id': '1',
@@ -73,7 +76,7 @@ class UserFactoryTest(TestCase):
         self.assertEqual(user.email, '')
 
 
-class UserFactoryOnErrorTest(TestCase):
+class UserFactoryOnErrorTest(test.TestCase):
     def test(self):
         factory = UserFactory()
         factory.graph_api_class = mock.Mock()
@@ -99,3 +102,35 @@ class UserFactoryOnErrorTest(TestCase):
             FacebookError("msg", 1),
             {'id': '123'}]
         self.assertEqual(None, factory.get_user("123"))
+
+
+@mock.patch('facepy.GraphAPI._query')
+@mock.patch('facebook_auth.graph_api.GRAPH_OBSERVER_CLASSES')
+class ObservableGraphApiTest(test.SimpleTestCase):
+    def test_query_failure(self, observers, query):
+        query.side_effect = FacebookError("msg", 1)
+        observer_cls = mock.Mock()
+        observers.__iter__.return_value = [observer_cls]
+        with self.assertRaises(FacebookError):
+            graph_api.ObservableGraphAPI().get('me')
+        observer_cls.return_value.handle_facebook_communication.assert_called_once_with()
+        observer_cls.assert_called_once_with(None, None, query.side_effect)
+
+    def test_query_success_string(self, observers, query):
+        query.return_value = 'some string response'
+        observer_cls = mock.Mock()
+        observers.__iter__.return_value = [observer_cls]
+        graph_api.ObservableGraphAPI().get('me')
+        observer_cls.return_value.handle_facebook_communication.assert_called_once_with()
+        observer_cls.assert_called_once_with(None, None, None)
+
+
+class GraphObserversTest(test.SimpleTestCase):
+    def test_getting_observer_classes(self):
+        classes = graph_api.get_graph_observer_classes([MOCK_CLASS_NAME])
+        self.assertEqual([mock.Mock], list(classes))
+
+    def test_iterating_observer_classes_twice(self):
+        classes = graph_api.get_graph_observer_classes([MOCK_CLASS_NAME])
+        list(classes)
+        self.assertEqual([mock.Mock], list(classes))
