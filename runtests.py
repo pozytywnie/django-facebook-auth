@@ -27,19 +27,12 @@ if not settings.configured:
             'django.contrib.sessions',
             'django.contrib.sites',
             'django.contrib.messages',
-            'django_jenkins',
             'djcelery',
             'kombu.transport.django',
         ) + PROJECT_APPS,
         SITE_ID = 1,
         ROOT_URLCONF = 'facebook_auth.urls',
-        JENKINS_TASKS = (
-            'django_jenkins.tasks.with_coverage',
-            'django_jenkins.tasks.run_pep8',
-            'django_jenkins.tasks.run_pyflakes',
-        ) + ('django_jenkins.tasks.django_tests',) if LEGACY else ()
     )
 
 djcelery.setup_loader()
-execute_from_command_line(['runtests.py', 'jenkins',
-                           '--output-dir', OUTPUT_DIR])
+execute_from_command_line(['runtests.py', 'test'])
