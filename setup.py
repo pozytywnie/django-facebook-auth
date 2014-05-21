@@ -16,7 +16,7 @@ setup(
 
     install_requires=(
         'celery',
-        'django<1.6',
+        'django<1.7',
         'facepy',
     ),
 

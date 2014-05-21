@@ -1,6 +1,9 @@
 django-facebook-auth
 ========================
 
+.. image:: https://travis-ci.org/pozytywnie/django-facebook-auth.svg
+   :target: https://travis-ci.org/pozytywnie/django-facebook-auth
+
 Installation
 ------------
 
