@@ -251,5 +251,7 @@ def debug_all_tokens_for_user(user_id):
                                             countdown=45)
         else:
             logger.info('Deleting user tokens except best one.')
-            UserToken.objects.filter(id__in=processed_user_tokens).exclude(
-                id=best_token.id).update(deleted=True)
+            tokens_to_delete = sorted(processed_user_tokens)
+            tokens_to_delete.remove(best_token.id)
+            for token_id in processed_user_tokens:
+                UserToken.objects.filter(id=token_id).update(deleted=True)
