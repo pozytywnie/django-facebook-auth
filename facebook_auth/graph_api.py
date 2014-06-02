@@ -5,6 +5,7 @@ import facepy
 from facepy.exceptions import FacebookError
 
 from django.conf import settings
+from django.utils import timezone
 
 
 def get_class(class_name):
@@ -73,6 +74,7 @@ class FacebookConnectionObservers(object):
         self.request = None
         self.response = None
         self.error = None
+        self.start = timezone.now()
 
     def handle_request(self, *args, **kwargs):
         self.request = RequestInfo(*args, **kwargs)
@@ -84,9 +86,10 @@ class FacebookConnectionObservers(object):
         self.error = error
 
     def finalize(self):
+        time = timezone.now() - self.start
         for observer_class in GRAPH_OBSERVER_CLASSES:
             observer = observer_class(
-                self.request, self.response, self.error)
+                self.request, self.response, self.error, time)
             observer.handle_facebook_communication()
 
 
