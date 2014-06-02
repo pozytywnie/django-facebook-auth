@@ -5,6 +5,8 @@ except ImportError:
     import mock
     MOCK_CLASS_NAME = 'mock.Mock'
 
+import datetime
+
 from django import test
 
 from facepy.exceptions import FacebookError
@@ -104,25 +106,36 @@ class UserFactoryOnErrorTest(test.TestCase):
         self.assertEqual(None, factory.get_user("123"))
 
 
+@mock.patch('django.utils.timezone.now')
 @mock.patch('facepy.GraphAPI._query')
 @mock.patch('facebook_auth.graph_api.GRAPH_OBSERVER_CLASSES')
 class ObservableGraphApiTest(test.SimpleTestCase):
-    def test_query_failure(self, observers, query):
+    def test_query_failure(self, observers, query, now):
+        now.side_effect = [
+            datetime.datetime(year=1, month=1, day=1, minute=1),
+            datetime.datetime(year=1, month=1, day=1, minute=2),
+        ]
         query.side_effect = FacebookError("msg", 1)
         observer_cls = mock.Mock()
         observers.__iter__.return_value = [observer_cls]
         with self.assertRaises(FacebookError):
             graph_api.ObservableGraphAPI().get('me')
         observer_cls.return_value.handle_facebook_communication.assert_called_once_with()
-        observer_cls.assert_called_once_with(None, None, query.side_effect)
+        observer_cls.assert_called_once_with(None, None, query.side_effect,
+                                             datetime.timedelta(minutes=1))
 
-    def test_query_success_string(self, observers, query):
+    def test_query_success_string(self, observers, query, now):
+        now.side_effect = [
+            datetime.datetime(year=1, month=1, day=1, minute=1),
+            datetime.datetime(year=1, month=1, day=1, minute=2),
+        ]
         query.return_value = 'some string response'
         observer_cls = mock.Mock()
         observers.__iter__.return_value = [observer_cls]
         graph_api.ObservableGraphAPI().get('me')
         observer_cls.return_value.handle_facebook_communication.assert_called_once_with()
-        observer_cls.assert_called_once_with(None, None, None)
+        observer_cls.assert_called_once_with(None, None, None,
+                                             datetime.timedelta(minutes=1))
 
 
 class GraphObserversTest(test.SimpleTestCase):
