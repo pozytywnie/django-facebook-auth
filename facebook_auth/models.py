@@ -47,12 +47,12 @@ class FacebookUser(auth_models.User):
     def access_token_expiration_date(self):
         return self._get_token_object().expiration_date
 
-    def _get_token_object(self):
-        return UserTokenManager.get_access_token(self.user_id)
-
     @property
     def graph(self):
         return graph_api.ObservableGraphAPI(self._get_token_object().token)
+
+    def _get_token_object(self):
+        return UserTokenManager.get_access_token(self.user_id)
 
     @property
     def js_session(self):
