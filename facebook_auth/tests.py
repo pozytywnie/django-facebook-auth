@@ -14,6 +14,7 @@ import pytz
 
 from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
+from facebook_auth import forms
 from facebook_auth import graph_api
 from facebook_auth import models
 
@@ -178,3 +179,62 @@ class UserTokenManagerTest(test.TestCase):
         manager.invalidate_access_token('abc123')
         self.assertRaises(models.UserToken.DoesNotExist,
                           manager.get_access_token, '123')
+
+
+class TestParseFacebookResponse(test.SimpleTestCase):
+    def test_without_data(self):
+        response = forms.parse_facebook_response({}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_with_empty_data(self):
+        response = forms.parse_facebook_response({'data': {}}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_if_original_dict_is_not_modified(self):
+        data = {}
+        input_json = {'data': data}
+        forms.parse_facebook_response(input_json, '123')
+        self.assertEqual({}, data)
+        self.assertEqual({'data': {}}, input_json)
+
+    def test_is_valid_as_string(self):
+        data = {
+            'expires_at': 12341234,
+            'is_valid': 'foo',
+            'scopes[]': 'foo,bar',
+            'user_id': '123',
+        }
+        response = forms.parse_facebook_response({'data': data}, '123')
+        self.assertEqual(response.is_valid, True)
+
+    def test_valid_response(self):
+        data = {
+            'expires_at': 12341234,
+            'is_valid': True,
+            'scopes[]': 'foo,bar',
+            'user_id': '123',
+        }
+        response = forms.parse_facebook_response({'data': data}, '123')
+        self.assertEqual(response.is_valid, True)
+
+    def test_test_strange_types(self):
+        data = {
+            'expires_at': {},
+            'is_valid': [],
+            'scopes[]': {},
+            'user_id': 1.1,
+        }
+        response = forms.parse_facebook_response({'data': data}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_data_as_list(self):
+        response = forms.parse_facebook_response({'data': []}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_data_as_int(self):
+        response = forms.parse_facebook_response({'data': []}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_bool_response(self):
+        response = forms.parse_facebook_response(False, '123')
+        self.assertEqual(response.is_valid, False)
