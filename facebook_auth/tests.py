@@ -10,10 +10,12 @@ import datetime
 from django import test
 
 from facepy.exceptions import FacebookError
+import pytz
 
 from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
 from facebook_auth import graph_api
+from facebook_auth import models
 
 
 class TruncaterTest(test.SimpleTestCase):
@@ -147,3 +149,32 @@ class GraphObserversTest(test.SimpleTestCase):
         classes = graph_api.get_graph_observer_classes([MOCK_CLASS_NAME])
         list(classes)
         self.assertEqual([mock.Mock], list(classes))
+
+
+class UserTokenManagerTest(test.TestCase):
+    def test_simple_insert(self):
+        manager = models.UserTokenManager
+        manager.insert_token('123', 'abc123',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        token = manager.get_access_token('123')
+        self.assertEqual('abc123', token.token)
+
+    def test_multiple_inserts(self):
+        manager = models.UserTokenManager
+        manager.insert_token('123', 'abc123',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        manager.insert_token('456', 'abc456',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        token = manager.get_access_token('123')
+        self.assertEqual('abc123', token.token)
+
+        token2 = manager.get_access_token('456')
+        self.assertEqual('abc456', token2.token)
+
+    def test_invalidating_token(self):
+        manager = models.UserTokenManager
+        manager.insert_token('123', 'abc123',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        manager.invalidate_access_token('abc123')
+        self.assertRaises(models.UserToken.DoesNotExist,
+                          manager.get_access_token, '123')
