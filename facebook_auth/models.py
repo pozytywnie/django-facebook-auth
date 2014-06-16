@@ -66,8 +66,9 @@ class FacebookUser(auth_models.User):
         response = utils.get_from_graph_api(self.graph, "me/friends")
         if 'data' in response:
             return response['data']
-        logger.warning("OpenGraph error: %s" % response)
-        return []
+        else:
+            logger.warning("OpenGraph error: %s" % response)
+            return []
 
     def update_app_friends(self):
         friends = self.friends
