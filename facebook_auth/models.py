@@ -58,7 +58,7 @@ class FacebookUser(auth_models.User):
     def js_session(self):
         return json.dumps({
             'access_token': self.access_token,
-            'uid': self.user_id
+            'uid': self.user_id,
         })
 
     @property
