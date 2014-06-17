@@ -10,10 +10,13 @@ import datetime
 from django import test
 
 from facepy.exceptions import FacebookError
+import pytz
 
 from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
+from facebook_auth import forms
 from facebook_auth import graph_api
+from facebook_auth import models
 
 
 class TruncaterTest(test.SimpleTestCase):
@@ -147,3 +150,91 @@ class GraphObserversTest(test.SimpleTestCase):
         classes = graph_api.get_graph_observer_classes([MOCK_CLASS_NAME])
         list(classes)
         self.assertEqual([mock.Mock], list(classes))
+
+
+class UserTokenManagerTest(test.TestCase):
+    def test_simple_insert(self):
+        manager = models.UserTokenManager
+        manager.insert_token('123', 'abc123',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        token = manager.get_access_token('123')
+        self.assertEqual('abc123', token.token)
+
+    def test_multiple_inserts(self):
+        manager = models.UserTokenManager
+        manager.insert_token('123', 'abc123',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        manager.insert_token('456', 'abc456',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        token = manager.get_access_token('123')
+        self.assertEqual('abc123', token.token)
+
+        token2 = manager.get_access_token('456')
+        self.assertEqual('abc456', token2.token)
+
+    def test_invalidating_token(self):
+        manager = models.UserTokenManager
+        manager.insert_token('123', 'abc123',
+                             datetime.datetime(1989, 2, 25, tzinfo=pytz.utc))
+        manager.invalidate_access_token('abc123')
+        self.assertRaises(models.UserToken.DoesNotExist,
+                          manager.get_access_token, '123')
+
+
+class TestParseFacebookResponse(test.SimpleTestCase):
+    def test_without_data(self):
+        response = forms.parse_facebook_response({}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_with_empty_data(self):
+        response = forms.parse_facebook_response({'data': {}}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_if_original_dict_is_not_modified(self):
+        data = {}
+        input_json = {'data': data}
+        forms.parse_facebook_response(input_json, '123')
+        self.assertEqual({}, data)
+        self.assertEqual({'data': {}}, input_json)
+
+    def test_is_valid_as_string(self):
+        data = {
+            'expires_at': 12341234,
+            'is_valid': 'foo',
+            'scopes[]': 'foo,bar',
+            'user_id': '123',
+        }
+        response = forms.parse_facebook_response({'data': data}, '123')
+        self.assertEqual(response.is_valid, True)
+
+    def test_valid_response(self):
+        data = {
+            'expires_at': 12341234,
+            'is_valid': True,
+            'scopes[]': 'foo,bar',
+            'user_id': '123',
+        }
+        response = forms.parse_facebook_response({'data': data}, '123')
+        self.assertEqual(response.is_valid, True)
+
+    def test_test_strange_types(self):
+        data = {
+            'expires_at': {},
+            'is_valid': [],
+            'scopes[]': {},
+            'user_id': 1.1,
+        }
+        response = forms.parse_facebook_response({'data': data}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_data_as_list(self):
+        response = forms.parse_facebook_response({'data': []}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_data_as_int(self):
+        response = forms.parse_facebook_response({'data': []}, '123')
+        self.assertEqual(response.is_valid, False)
+
+    def test_bool_response(self):
+        response = forms.parse_facebook_response(False, '123')
+        self.assertEqual(response.is_valid, False)

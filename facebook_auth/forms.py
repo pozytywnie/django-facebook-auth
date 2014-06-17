@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 
 from django import forms
@@ -47,18 +48,28 @@ class TokenInformationForm(forms.Form):
         return naive.replace(tzinfo=timezone.utc)
 
 
+class FacebookResponseError(Exception):
+    def __init__(self, errors):
+        super(FacebookResponseError, self).__init__()
+        self.errors = errors
+
+
 def parse_facebook_response(raw_response, token):
-    if raw_response and 'data' in raw_response:
-        raw_response['data']['token'] = token
-        form = TokenInformationForm(raw_response['data'])
-        if form.is_valid():
-            parsed_data = form.cleaned_data
-            is_valid = True
-            errors = None
-        else:
-            parsed_data = None
-            is_valid = False
-            errors = form.errors
-        return ParsedResponse(parsed_data, is_valid, errors)
+    try:
+        return try_to_parse_facebook_response(raw_response, token)
+    except FacebookResponseError as e:
+        return ParsedResponse(None, False, e.errors)
+
+
+def try_to_parse_facebook_response(raw_response, token):
+    if not isinstance(raw_response, dict):
+        raise FacebookResponseError(['Facebook response should be dict.'])
+    data = copy.deepcopy(raw_response.get('data', {}))
+    if not isinstance(data, dict):
+        raise FacebookResponseError(['Facebook data should be dict.'])
+    data['token'] = token
+    form = TokenInformationForm(data)
+    if form.is_valid():
+        return ParsedResponse(form.cleaned_data, True, None)
     else:
-        return ParsedResponse(None, False, ['Invalid Facebook response.'])
+        raise FacebookResponseError(form.errors)

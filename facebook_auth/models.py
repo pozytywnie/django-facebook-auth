@@ -47,18 +47,18 @@ class FacebookUser(auth_models.User):
     def access_token_expiration_date(self):
         return self._get_token_object().expiration_date
 
-    def _get_token_object(self):
-        return UserTokenManager.get_access_token(self.user_id)
-
     @property
     def graph(self):
         return graph_api.ObservableGraphAPI(self._get_token_object().token)
+
+    def _get_token_object(self):
+        return UserTokenManager.get_access_token(self.user_id)
 
     @property
     def js_session(self):
         return json.dumps({
             'access_token': self.access_token,
-            'uid': self.user_id
+            'uid': self.user_id,
         })
 
     @property
@@ -66,8 +66,9 @@ class FacebookUser(auth_models.User):
         response = utils.get_from_graph_api(self.graph, "me/friends")
         if 'data' in response:
             return response['data']
-        logger.warning("OpenGraph error: %s" % response)
-        return []
+        else:
+            logger.warning("OpenGraph error: %s" % response)
+            return []
 
     def update_app_friends(self):
         friends = self.friends
@@ -100,7 +101,7 @@ class UserTokenManager(object):
                     'expiration_date': expiration_date}
         obj, created = UserToken.objects.get_or_create(
             token=token, defaults=defaults)
-        if not created and expiration_date:
+        if not created:
             if obj.expiration_date > expiration_date + timedelta(seconds=30):
                 extra = {'object_expiration_date': obj.expiration_date,
                          'expiration_date': expiration_date,
