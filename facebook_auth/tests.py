@@ -217,6 +217,32 @@ class TestParseFacebookResponse(test.SimpleTestCase):
         response = forms.parse_facebook_response({'data': data}, '123')
         self.assertEqual(response.is_valid, True)
 
+    def test_valid_real_data(self):
+        data = {
+            "expires_at": 1403429380,
+            "scopes": [
+              "public_profile",
+              "basic_info",
+              "publish_checkins",
+              "status_update",
+              "photo_upload",
+              "video_upload",
+              "email",
+              "create_note",
+              "share_item",
+              "publish_stream",
+              "publish_actions",
+              "user_friends"
+            ],
+            "app_id": 423260947733647,
+            "application": "'Social WiFi'",
+            "issued_at": 1398245380,
+            "is_valid": True,
+            "user_id": 1000066666,
+        }
+        response = forms.parse_facebook_response({'data': data}, '123')
+        self.assertEqual(response.is_valid, True)
+
     def test_test_strange_types(self):
         data = {
             'expires_at': {},
