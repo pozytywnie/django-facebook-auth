@@ -228,31 +228,34 @@ def dispatch_engines_run(sender, instance, created, **kwargs):
 def debug_all_tokens_for_user(user_id):
     manager = FacebookTokenManager()
     token_manager = UserTokenManager()
-    user_tokens = UserToken.objects.filter(provider_user_id=user_id,
-        deleted=False)
-    processed_user_tokens = []
+    user_tokens = list(
+        UserToken.objects
+        .filter(provider_user_id=user_id, deleted=False)
+        .values_list('token', flat=True)
+    )
     for token in user_tokens:
-        processed_user_tokens.append(token.token)
         try:
-            data = manager.debug_token(token.token)
+            data = manager.debug_token(token)
         except ValueError:
             logger.info('Invalid access token')
-            token_manager.invalidate_access_token(token.token)
+            token_manager.invalidate_access_token(token)
         else:
             token_manager.insert_token(user_id, data.token, data.expires)
-
     try:
         best_token = token_manager.get_access_token(user_id)
     except UserToken.DoesNotExist:
-        pass
+        logger.info("Best token was deleted by other process.")
     else:
-        if best_token.token not in processed_user_tokens:
-            logger.info('Retrying debug_all_tokens_for_user.')
+        if best_token.token not in user_tokens:
+            logger.info(
+                'New best token has arrived.'
+                'Retrying debug_all_tokens_for_user.'
+            )
             debug_all_tokens_for_user.retry(args=[user_id],
                                             countdown=45)
         else:
             logger.info('Deleting user tokens except best one.')
-            tokens_to_delete = sorted(processed_user_tokens)
+            tokens_to_delete = sorted(user_tokens)
             tokens_to_delete.remove(best_token.token)
             for token in tokens_to_delete:
                 token_manager.invalidate_access_token(token)
