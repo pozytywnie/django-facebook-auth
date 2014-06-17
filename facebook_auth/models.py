@@ -254,5 +254,5 @@ def debug_all_tokens_for_user(user_id):
             logger.info('Deleting user tokens except best one.')
             tokens_to_delete = sorted(processed_user_tokens)
             tokens_to_delete.remove(best_token.id)
-            for token_id in processed_user_tokens:
+            for token_id in tokens_to_delete:
                 UserToken.objects.filter(id=token_id).update(deleted=True)

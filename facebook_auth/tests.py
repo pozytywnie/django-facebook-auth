@@ -238,3 +238,27 @@ class TestParseFacebookResponse(test.SimpleTestCase):
     def test_bool_response(self):
         response = forms.parse_facebook_response(False, '123')
         self.assertEqual(response.is_valid, False)
+
+
+class TestDebugAllTokensForUser(test.TestCase):
+    @mock.patch.object(models, 'FacebookTokenManager')
+    def test_positive_scenario(self, FacebookTokenManager):
+        manager = FacebookTokenManager.return_value
+        parsed_data = manager.debug_token.return_value
+        parsed_data.token = 'token1212'
+        parsed_data.expires = datetime.datetime(2014, 2, 2, tzinfo=pytz.utc)
+        token_manager = models.UserTokenManager()
+        token_manager.insert_token('123', 'token1212', "2014-02-02")
+        models.debug_all_tokens_for_user('123')
+        token = token_manager.get_access_token('123')
+        self.assertFalse(token.deleted)
+
+    @mock.patch.object(models, 'FacebookTokenManager')
+    def test_negative_scenario(self, FacebookTokenManager):
+        manager = FacebookTokenManager.return_value
+        manager.debug_token.side_effect = ValueError
+        token_manager = models.UserTokenManager()
+        token_manager.insert_token('123', 'token1212', "2014-02-02")
+        models.debug_all_tokens_for_user('123')
+        self.assertRaises(models.UserToken.DoesNotExist,
+                          token_manager.get_access_token, '123')
