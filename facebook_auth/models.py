@@ -232,7 +232,7 @@ def debug_all_tokens_for_user(user_id):
         deleted=False)
     processed_user_tokens = []
     for token in user_tokens:
-        processed_user_tokens.append(token.id)
+        processed_user_tokens.append(token.token)
         try:
             data = manager.debug_token(token.token)
         except ValueError:
@@ -246,13 +246,13 @@ def debug_all_tokens_for_user(user_id):
     except UserToken.DoesNotExist:
         pass
     else:
-        if best_token.id not in processed_user_tokens:
+        if best_token.token not in processed_user_tokens:
             logger.info('Retrying debug_all_tokens_for_user.')
             debug_all_tokens_for_user.retry(args=[user_id],
                                             countdown=45)
         else:
             logger.info('Deleting user tokens except best one.')
             tokens_to_delete = sorted(processed_user_tokens)
-            tokens_to_delete.remove(best_token.id)
-            for token_id in tokens_to_delete:
-                UserToken.objects.filter(id=token_id).update(deleted=True)
+            tokens_to_delete.remove(best_token.token)
+            for token in tokens_to_delete:
+                token_manager.invalidate_access_token(token)
