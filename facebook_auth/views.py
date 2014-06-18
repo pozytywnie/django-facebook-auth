@@ -13,7 +13,8 @@ def handler(request):
     try:
         next_url = urls.Next().decode(request.GET['next'])
     except urls.InvalidNextUrl:
-        logger.warning('Invalid facebook handler next.')
+        logger.warning('Invalid facebook handler next.',
+                       extra={'request': request})
         return http.HttpResponseBadRequest()
     if 'code' not in request.GET:
         return http.HttpResponseRedirect(next_url['close'])
