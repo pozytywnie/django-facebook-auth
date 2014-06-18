@@ -10,16 +10,24 @@ except ImportError:
 from django.conf import settings
 from django.conf.urls import patterns
 from django.conf.urls import url
+from django.core import signing
 from django.core.urlresolvers import reverse
 
+class InvalidNextUrl(Exception):
+    pass
 
 class Next():
+    salt = 'facebook_auth.urls.Next'
+
     def encode(self, data):
-        data = codecs.getencoder('rot-13')(json.dumps(data))[0]
+        data = signing.dumps(data, salt=self.salt)
         return urlencode({'next': data})
 
     def decode(self, data):
-        return json.loads(codecs.getdecoder('rot-13')(data)[0])
+        try:
+            return signing.loads(data, salt=self.salt)
+        except signing.BadSignature:
+            raise InvalidNextUrl()
 
 
 def redirect_uri(next, close):
