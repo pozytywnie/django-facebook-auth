@@ -1,11 +1,21 @@
+import logging
+
 from django.contrib.auth import authenticate
 from django.contrib.auth import login
 from django import http
 from facebook_auth import urls
 
 
+logger = logging.getLogger(__name__)
+
+
 def handler(request):
-    next_url = urls.Next().decode(request.GET['next'])
+    try:
+        next_url = urls.Next().decode(request.GET['next'])
+    except urls.InvalidNextUrl:
+        logger.warning('Invalid facebook handler next.',
+                       extra={'request': request})
+        return http.HttpResponseBadRequest()
     if 'code' not in request.GET:
         return http.HttpResponseRedirect(next_url['close'])
     user = authenticate(

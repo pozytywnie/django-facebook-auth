@@ -1,8 +1,10 @@
 try:
     from unittest import mock
+    from urllib import parse
     MOCK_CLASS_NAME = 'unittest.mock.Mock'
 except ImportError:
     import mock
+    import urlparse as parse
     MOCK_CLASS_NAME = 'mock.Mock'
 
 import datetime
@@ -17,6 +19,8 @@ from facebook_auth.backends import UserFactory
 from facebook_auth import forms
 from facebook_auth import graph_api
 from facebook_auth import models
+from facebook_auth import urls
+from facebook_auth import views
 
 
 class TruncaterTest(test.SimpleTestCase):
@@ -288,3 +292,37 @@ class TestDebugAllTokensForUser(test.TestCase):
         models.debug_all_tokens_for_user('123')
         self.assertRaises(models.UserToken.DoesNotExist,
                           token_manager.get_access_token, '123')
+
+
+class TestNextUrl(test.TestCase):
+    def test_invalid_next(self):
+        with self.assertRaises(urls.InvalidNextUrl):
+            urls.Next().decode('1:2:3')
+
+    def test_invalid_next_format(self):
+        with self.assertRaises(urls.InvalidNextUrl):
+            urls.Next().decode('this is not valid signature')
+
+    def test_empty_next(self):
+        with self.assertRaises(urls.InvalidNextUrl):
+            urls.Next().decode('')
+
+
+class HandlerAcceptanceTest(test.TestCase):
+    @mock.patch('facebook_auth.views.authenticate')
+    def test_valid_next(self, authenticate):
+        authenticate.return_value = None
+        encoded_next = urls.Next().encode({
+            'next': 'http://next.example.com',
+            'close': 'http://close.example.com'})
+        next_value = parse.parse_qs(encoded_next)['next'][0]
+        request = mock.Mock(GET={'next': next_value, 'code': 'code'})
+        with self.settings(FACEBOOK_CANVAS_URL='http://example.com'):
+            response = views.handler(request)
+        self.assertEqual(302, response.status_code)
+        self.assertEqual('http://next.example.com', response['Location'])
+
+    def test_invalid_next(self):
+        request = mock.Mock(GET={'next': 'a:b:c', 'code': 'code'})
+        response = views.handler(request)
+        self.assertEqual(400, response.status_code)
