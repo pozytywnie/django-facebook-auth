@@ -18,17 +18,21 @@ class Handler(generic.View):
             logger.warning('Invalid facebook handler next.',
                            extra={'request': request})
             return http.HttpResponseBadRequest()
-        if 'code' not in request.GET:
-            return http.HttpResponseRedirect(next_url['close'])
+        if 'code' in request.GET:
+            self.login(next_url)
+            response = http.HttpResponseRedirect(next_url['next'])
+            response["P3P"] = ('CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi'
+                               ' IVDi CONi HIS OUR IND CNT"')
+        else:
+            response = http.HttpResponseRedirect(next_url['close'])
+        return response
+
+    def login(self, next_url):
         user = authenticate(
-            code=request.GET['code'],
+            code=self.request.GET['code'],
             redirect_uri=urls.redirect_uri(next_url['next'],
                                            next_url['close']))
         if user:
-            login(request, user)
-        response = http.HttpResponseRedirect(next_url['next'])
-        response["P3P"] = ('CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi'
-                           ' CONi HIS OUR IND CNT"')
-        return response
+            login(self.request, user)
 
 handler = Handler.as_view()
