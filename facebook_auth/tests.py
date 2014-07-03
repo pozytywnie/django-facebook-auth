@@ -316,13 +316,15 @@ class HandlerAcceptanceTest(test.TestCase):
             'next': 'http://next.example.com',
             'close': 'http://close.example.com'})
         next_value = parse.parse_qs(encoded_next)['next'][0]
-        request = mock.Mock(GET={'next': next_value, 'code': 'code'})
+        request = mock.Mock(GET={'next': next_value, 'code': 'code'},
+                            method='GET')
         with self.settings(FACEBOOK_CANVAS_URL='http://example.com'):
             response = views.handler(request)
         self.assertEqual(302, response.status_code)
         self.assertEqual('http://next.example.com', response['Location'])
 
     def test_invalid_next(self):
-        request = mock.Mock(GET={'next': 'a:b:c', 'code': 'code'})
+        request = mock.Mock(GET={'next': 'a:b:c', 'code': 'code'},
+                            method='GET')
         response = views.handler(request)
         self.assertEqual(400, response.status_code)
