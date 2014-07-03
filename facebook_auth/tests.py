@@ -86,13 +86,14 @@ class UserFactoryTest(test.TestCase):
 
 
 class UserFactoryOnErrorTest(test.TestCase):
-    def test(self):
+    def test_success(self):
         factory = UserFactory()
         factory.graph_api_class = mock.Mock()
         factory.graph_api_class.return_value.get.return_value = {'id': '123'}
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
+    def test_success_in_retry(self):
         factory = UserFactory()
         factory.graph_api_class = mock.Mock()
         factory.graph_api_class.return_value.get.side_effect = [
@@ -103,6 +104,7 @@ class UserFactoryOnErrorTest(test.TestCase):
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
+    def test_failure(self):
         factory = UserFactory()
         factory.graph_api_class = mock.Mock()
         factory.graph_api_class.return_value.get.side_effect = [
@@ -110,7 +112,8 @@ class UserFactoryOnErrorTest(test.TestCase):
             FacebookError("msg", 1),
             FacebookError("msg", 1),
             {'id': '123'}]
-        self.assertEqual(None, factory.get_user("123"))
+        with self.assertRaises(FacebookError):
+            factory.get_user("123")
 
 
 @mock.patch('django.utils.timezone.now')
