@@ -10,7 +10,6 @@ except ImportError:
 
 from django.conf import settings
 from django.utils import timezone
-import facepy
 from facepy import exceptions
 
 from facebook_auth import models
@@ -63,11 +62,8 @@ class UserFactory(object):
     def get_user(self, access_token, token_expiration_date=None):
         token_expiration_date = (token_expiration_date or
                                  self._get_fallback_expiration_date())
-        try:
-            profile = utils.get_from_graph_api(
-                self.graph_api_class(access_token), 'me')
-        except facepy.FacepyError:
-            return None
+        profile = utils.get_from_graph_api(
+            self.graph_api_class(access_token), 'me')
         return self._product_user(access_token, profile, token_expiration_date)
 
     def _get_fallback_expiration_date(self):
@@ -112,12 +108,13 @@ class FacebookBackend(object):
             code_used_message = 'This authorization code has been used.'
             if e.code == 100 and e.message == code_used_message:
                 logger.info(message)
+                return None
             else:
                 logger.warning(message)
-            return None
+                raise
         except exceptions.FacepyError as e:
             logger.warning("Facebook login connection error")
-            return None
+            raise
         try:
             access_token = urlparse.parse_qs(data)['access_token'][-1]
             expires = urlparse.parse_qs(data)['expires'][-1]
