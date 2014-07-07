@@ -7,6 +7,7 @@ except ImportError:
     import urlparse as parse
     MOCK_CLASS_NAME = 'mock.Mock'
 
+import collections
 import datetime
 
 from django import test
@@ -309,6 +310,21 @@ class TestNextUrl(test.TestCase):
     def test_empty_next(self):
         with self.assertRaises(urls.InvalidNextUrl):
             urls.Next().decode('')
+
+    def test_if_encoding_is_dictionary_order_independent(self):
+        ordered = collections.OrderedDict([('A', 'a'), ('B', 'b')])
+        reverse_ordered = collections.OrderedDict([('B', 'b'), ('A', 'a')])
+        self.assertEqual(urls.Next().encode(ordered),
+                         urls.Next().encode(reverse_ordered))
+
+    @mock.patch('django.core.signing.time.time')
+    def test_if_encoding_does_not_vary_in_time(self, time):
+        data = {'a': 3}
+        time.return_value = 16
+        old = urls.Next().encode(data)
+        time.return_value = 42
+        new = urls.Next().encode(data)
+        self.assertEqual(old, new)
 
 
 class HandlerAcceptanceTest(test.TestCase):
