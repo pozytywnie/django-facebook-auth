@@ -1,7 +1,6 @@
 language: python
 
 python:
-  - "2.6"
   - "2.7"
   - "3.3"
   - "3.4"
@@ -9,7 +8,6 @@ python:
 env:
   - DJANGO="Django>=1.6,<1.7"
   - DJANGO="Django>=1.5,<1.6"
-  - DJANGO="Django>=1.4,<1.5"
 
 install:
   - python setup.py install
@@ -19,10 +17,3 @@ install:
 script:
   - createdb facebook_auth-test-database
   - python runtests.py
-
-matrix:
-  exclude:
-    - python: "3.3"
-      env: DJANGO="Django>=1.4,<1.5"
-    - python: "3.4"
-      env: DJANGO="Django>=1.4,<1.5"
