@@ -24,7 +24,8 @@ def _truncate(word, length, to_zero=False):
     else:
         return word[:length]
 
-FACEBOOK_TIMEOUT = timezone.timedelta(seconds=20).total_seconds()
+FACEBOOK_TIMEOUT = getattr(settings, 'FACEBOOK_AUTH_BACKEND_FACEBOOK_TIMEOUT',
+                           timezone.timedelta(seconds=20).total_seconds())
 
 
 class UserFactory(object):
