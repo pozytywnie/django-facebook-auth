@@ -8,7 +8,7 @@ def read(name):
 
 setup(
     name='django-facebook-auth',
-    version='3.5.2',
+    version='3.5.3',
     description="Authorisation app for Facebook API.",
     long_description=read("README.rst"),
     maintainer="Tomasz Wysocki",
@@ -17,7 +17,7 @@ setup(
     install_requires=(
         'celery',
         'django<1.7',
-        'facepy',
+        'facepy>=1.0.3',
     ),
 
     packages=[

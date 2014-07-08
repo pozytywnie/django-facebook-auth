@@ -24,6 +24,9 @@ def _truncate(word, length, to_zero=False):
     else:
         return word[:length]
 
+FACEBOOK_TIMEOUT = getattr(settings, 'FACEBOOK_AUTH_BACKEND_FACEBOOK_TIMEOUT',
+                           timezone.timedelta(seconds=20).total_seconds())
+
 
 class UserFactory(object):
     graph_api_class = ObservableGraphAPI
@@ -63,7 +66,7 @@ class UserFactory(object):
         token_expiration_date = (token_expiration_date or
                                  self._get_fallback_expiration_date())
         profile = utils.get_from_graph_api(
-            self.graph_api_class(access_token), 'me')
+            self.graph_api_class(access_token, timeout=FACEBOOK_TIMEOUT), 'me')
         return self._product_user(access_token, profile, token_expiration_date)
 
     def _get_fallback_expiration_date(self):
@@ -71,7 +74,8 @@ class UserFactory(object):
         return self.fallback_expiration_date
 
     def get_user_by_id(self, uid):
-        profile = utils.get_from_graph_api(self.graph_api_class(), uid)
+        graph_api = self.graph_api_class(timeout=FACEBOOK_TIMEOUT)
+        profile = utils.get_from_graph_api(graph_api, uid)
         return self._product_user(None, profile)
 
     def create_profile_object(self, profile, user):
@@ -94,7 +98,7 @@ USER_FACTORY = UserFactory()
 
 class FacebookBackend(object):
     def authenticate(self, code=None, redirect_uri=None):
-        graph = ObservableGraphAPI()
+        graph = ObservableGraphAPI(timeout=FACEBOOK_TIMEOUT)
         args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'client_secret': settings.FACEBOOK_APP_SECRET,
