@@ -8,7 +8,7 @@ def read(name):
 
 setup(
     name='django-facebook-auth',
-    version='3.5.3',
+    version='3.5.4',
     description="Authorisation app for Facebook API.",
     long_description=read("README.rst"),
     maintainer="Tomasz Wysocki",
