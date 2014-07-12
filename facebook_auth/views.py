@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 class Handler(generic.View):
     def get(self, request):
         try:
-            self.next_url = urls.Next().decode(request.GET['next'])
+            got_next = self._get_next_from_request(request)
+            self.next_url = urls.Next().decode(got_next)
         except urls.InvalidNextUrl:
             logger.warning('Invalid facebook handler next.',
                            extra={'request': request})
@@ -32,6 +33,12 @@ class Handler(generic.View):
         else:
             response = http.HttpResponseRedirect(self.next_url['close'])
         return response
+
+    def _get_next_from_request(self, request):
+        if 'next' in request.GET:
+            return request.GET['next']
+        else:
+            raise urls.InvalidNextUrl
 
     def login(self):
         user = authenticate(

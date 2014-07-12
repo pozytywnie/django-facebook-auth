@@ -347,3 +347,8 @@ class HandlerAcceptanceTest(test.TestCase):
                             method='GET')
         response = views.handler(request)
         self.assertEqual(400, response.status_code)
+
+    def test_without_next(self):
+        request = mock.Mock(GET={'code': 'code'}, method='GET')
+        response = views.handler(request)
+        self.assertEqual(400, response.status_code)
