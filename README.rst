@@ -4,7 +4,7 @@ django-facebook-auth
 .. image:: https://travis-ci.org/pozytywnie/django-facebook-auth.svg
    :target: https://travis-ci.org/pozytywnie/django-facebook-auth
 
-A stable Facebook authentication backend for Django >= 1.4.
+A stable Facebook authentication backend for Django >= 1.4. (Versions 3.5.* for Django < 1.7 and versions 3.6.* and up for Django 1.7 and up.)
 
 Requires Celery for background token operations.
 
@@ -17,7 +17,7 @@ _______
 
 django-facebook-auth can be installed as a normal Python package.
 
-Example instalation for pip::
+Example installation for pip::
 
     $ pip install django-facebook-auth
 
