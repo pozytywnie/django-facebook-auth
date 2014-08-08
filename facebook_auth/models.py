@@ -85,6 +85,7 @@ class FacebookUser(auth_models.User):
 class UserToken(models.Model):
     provider_user_id = models.CharField(max_length=255)
     token = models.TextField(unique=True)
+    granted_at = models.DateTimeField(auto_now_add=True)
     expiration_date = models.DateTimeField()
     deleted = models.BooleanField(default=False)
 
