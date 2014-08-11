@@ -130,7 +130,9 @@ class UserTokenManager(object):
                             granted_at__gte=eldest_wildcarded)
                     .latest('granted_at'))
         except UserToken.DoesNotExist:
-            return related_tokens.latest('expiration_date')
+            return (related_tokens
+                    .exclude(expiration_date__isnull=True)
+                    .latest('expiration_date'))
 
     @staticmethod
     def invalidate_access_token(token):

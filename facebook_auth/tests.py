@@ -189,35 +189,27 @@ class UserTokenManagerTest(test.TestCase):
                           manager.get_access_token, '123')
 
     @mock.patch('django.utils.timezone.now',
-                return_value=datetime.datetime(1989, 9, 19, 18, 33,
-                                               tzinfo=pytz.utc))
+                return_value=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc))
     def test_getting_wildcarded_token_first(self, _):
         models.UserToken.objects.create(
             provider_user_id='555',
             token='WildcardedToken',
-            granted_at=datetime.datetime(1989, 9, 19, 18, 30, tzinfo=pytz.utc),
             expiration_date=None,
         )
         models.UserToken.objects.create(
             provider_user_id='555',
             token='ImCrap',
-            granted_at=datetime.datetime(1989, 9, 19, 18, 40, tzinfo=pytz.utc),
-            expiration_date=datetime.datetime(4444, 9, 19, 18, 23,
-                                              tzinfo=pytz.utc),
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
         )
         models.UserToken.objects.create(
             provider_user_id='555',
             token='ImCrapToo',
-            granted_at=datetime.datetime(1989, 9, 19, 18, 0, tzinfo=pytz.utc),
-            expiration_date=datetime.datetime(1989, 9, 19, 18, 1,
-                                              tzinfo=pytz.utc),
+            expiration_date=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc),
         )
         models.UserToken.objects.create(
             provider_user_id='555',
             token='ImCrapThree',
-            granted_at=datetime.datetime(1989, 9, 19, 18, 0, tzinfo=pytz.utc),
-            expiration_date=datetime.datetime(4444, 9, 19, 18, 0,
-                                              tzinfo=pytz.utc),
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
         )
         manager = models.UserTokenManager
         token = manager.get_access_token('555')
@@ -227,24 +219,40 @@ class UserTokenManagerTest(test.TestCase):
         models.UserToken.objects.create(
             provider_user_id='555',
             token='ImCrapSorry',
-            expiration_date=datetime.datetime(1989, 9, 19, 18, 0,
-                                              tzinfo=pytz.utc),
+            expiration_date=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc),
         )
         models.UserToken.objects.create(
             provider_user_id='555',
             token='lastExpiring',
-            expiration_date=datetime.datetime(4444, 9, 19, 18, 23,
-                                              tzinfo=pytz.utc),
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
         )
         models.UserToken.objects.create(
             provider_user_id='555',
             token='ImCrapDontLaughAtMe',
-            expiration_date=datetime.datetime(1989, 9, 19, 18, 1,
-                                              tzinfo=pytz.utc),
+            expiration_date=datetime.datetime(2000, 1, 1, tzinfo=pytz.utc),
         )
         manager = models.UserTokenManager
         token = manager.get_access_token('555')
         self.assertEqual('lastExpiring', token.token)
+
+    @mock.patch('django.utils.timezone.now')
+    def test_getting_latest_token_on_expired_wildcarded(self, now):
+        now.return_value = datetime.datetime(1989, 1, 1, tzinfo=pytz.utc)
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='WithExpirationDate',
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
+        )
+        now.return_value = datetime.datetime(1, 1, 1, tzinfo=pytz.utc)
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='ExpiredJesusToken',
+            expiration_date=None,
+        )
+        now.return_value = datetime.datetime(1989, 1, 1, tzinfo=pytz.utc)
+        manager = models.UserTokenManager
+        token = manager.get_access_token('555')
+        self.assertEqual('WithExpirationDate', token.token)
 
     def test_getting_raising_error_on_no_token(self):
         manager = models.UserTokenManager
