@@ -14,6 +14,7 @@ except ImportError:
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
+from django.db.models import Q
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -85,7 +86,8 @@ class FacebookUser(auth_models.User):
 class UserToken(models.Model):
     provider_user_id = models.CharField(max_length=255)
     token = models.TextField(unique=True)
-    expiration_date = models.DateTimeField()
+    granted_at = models.DateTimeField(auto_now_add=True)
+    expiration_date = models.DateTimeField(null=True, blank=True, default=None)
     deleted = models.BooleanField(default=False)
 
     class Meta:
@@ -95,7 +97,7 @@ class UserToken(models.Model):
 
 class UserTokenManager(object):
     @staticmethod
-    def insert_token(provider_user_id, token, expiration_date):
+    def insert_token(provider_user_id, token, expiration_date=None):
         provider_user_id = str(provider_user_id)
         defaults = {'provider_user_id': provider_user_id,
                     'expiration_date': expiration_date}
@@ -119,10 +121,18 @@ class UserTokenManager(object):
 
     @staticmethod
     def get_access_token(provider_user_id):
-        return (UserToken.objects
-                .filter(provider_user_id=provider_user_id,
-                        deleted=False)
-                .latest('expiration_date'))
+        eldest_wildcarded = timezone.now() - timezone.timedelta(seconds=30)
+        related_tokens = UserToken.objects.filter(
+            provider_user_id=provider_user_id, deleted=False)
+        try:
+            return (related_tokens
+                    .filter(expiration_date__isnull=True,
+                            granted_at__gte=eldest_wildcarded)
+                    .latest('granted_at'))
+        except UserToken.DoesNotExist:
+            return (related_tokens
+                    .exclude(expiration_date__isnull=True)
+                    .latest('expiration_date'))
 
     @staticmethod
     def invalidate_access_token(token):
@@ -134,7 +144,7 @@ class FacebookTokenManager(object):
                                        ['user', 'expires', 'token'])
 
     @staticmethod
-    def insert_token(access_token, token_expiration_date, user_id):
+    def insert_token(access_token, user_id, token_expiration_date=None):
         token_manager = UserTokenManager()
         if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
             insert_extended_token.delay(access_token, user_id)
@@ -143,7 +153,7 @@ class FacebookTokenManager(object):
 
     def discover_fresh_access_token(self, access_token):
         data = self.debug_token(access_token)
-        self.insert_token(access_token, data.expires, data.user)
+        self.insert_token(access_token, data.user, data.expires)
 
     @staticmethod
     def convert_expiration_seconds_to_date(seconds):

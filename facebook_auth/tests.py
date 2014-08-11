@@ -188,6 +188,77 @@ class UserTokenManagerTest(test.TestCase):
         self.assertRaises(models.UserToken.DoesNotExist,
                           manager.get_access_token, '123')
 
+    @mock.patch('django.utils.timezone.now',
+                return_value=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc))
+    def test_getting_wildcarded_token_first(self, _):
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='WildcardedToken',
+            expiration_date=None,
+        )
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='ImCrap',
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
+        )
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='ImCrapToo',
+            expiration_date=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc),
+        )
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='ImCrapThree',
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
+        )
+        manager = models.UserTokenManager
+        token = manager.get_access_token('555')
+        self.assertEqual('WildcardedToken', token.token)
+
+    def test_getting_latest_token_on_no_wildcarded(self):
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='ImCrapSorry',
+            expiration_date=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc),
+        )
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='lastExpiring',
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
+        )
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='ImCrapDontLaughAtMe',
+            expiration_date=datetime.datetime(2000, 1, 1, tzinfo=pytz.utc),
+        )
+        manager = models.UserTokenManager
+        token = manager.get_access_token('555')
+        self.assertEqual('lastExpiring', token.token)
+
+    @mock.patch('django.utils.timezone.now')
+    def test_getting_latest_token_on_expired_wildcarded(self, now):
+        now.return_value = datetime.datetime(1989, 1, 1, tzinfo=pytz.utc)
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='WithExpirationDate',
+            expiration_date=datetime.datetime(4444, 1, 1, tzinfo=pytz.utc),
+        )
+        now.return_value = datetime.datetime(1, 1, 1, tzinfo=pytz.utc)
+        models.UserToken.objects.create(
+            provider_user_id='555',
+            token='ExpiredJesusToken',
+            expiration_date=None,
+        )
+        now.return_value = datetime.datetime(1989, 1, 1, tzinfo=pytz.utc)
+        manager = models.UserTokenManager
+        token = manager.get_access_token('555')
+        self.assertEqual('WithExpirationDate', token.token)
+
+    def test_getting_raising_error_on_no_token(self):
+        manager = models.UserTokenManager
+        self.assertRaises(models.UserToken.DoesNotExist,
+                          manager.get_access_token, '555')
+
 
 class TestParseFacebookResponse(test.SimpleTestCase):
     def test_without_data(self):
