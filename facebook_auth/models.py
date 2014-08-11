@@ -122,12 +122,15 @@ class UserTokenManager(object):
     @staticmethod
     def get_access_token(provider_user_id):
         eldest_wildcarded = timezone.now() - timezone.timedelta(seconds=30)
-        return (UserToken.objects
-                .filter(provider_user_id=provider_user_id,
-                        deleted=False)
-                .filter(Q(expiration_date=None)
-                        | Q(granted_at__gte=eldest_wildcarded))
-                .latest('expiration_date'))
+        related_tokens = UserToken.objects.filter(
+            provider_user_id=provider_user_id, deleted=False)
+        try:
+            return (related_tokens
+                    .filter(expiration_date__isnull=True,
+                            granted_at__gte=eldest_wildcarded)
+                    .latest('granted_at'))
+        except UserToken.DoesNotExist:
+            return related_tokens.latest('expiration_date')
 
     @staticmethod
     def invalidate_access_token(token):
