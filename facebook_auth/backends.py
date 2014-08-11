@@ -62,7 +62,8 @@ class UserFactory(object):
 
     def get_user(self, access_token):
         profile = utils.get_from_graph_api(
-            self.graph_api_class(access_token, timeout=FACEBOOK_TIMEOUT), 'me')
+            self.graph_api_class(access_token, timeout=FACEBOOK_TIMEOUT),
+            'v2.1/me')
         return self._product_user(access_token, profile)
 
     def _get_fallback_expiration_date(self):
