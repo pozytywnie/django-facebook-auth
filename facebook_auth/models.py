@@ -14,6 +14,7 @@ except ImportError:
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
+from django.db.models import Q
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -120,9 +121,12 @@ class UserTokenManager(object):
 
     @staticmethod
     def get_access_token(provider_user_id):
+        eldest_wildcarded = timezone.now() - timezone.timedelta(seconds=30)
         return (UserToken.objects
                 .filter(provider_user_id=provider_user_id,
                         deleted=False)
+                .filter(Q(expiration_date=None)
+                        | Q(granted_at__gte=eldest_wildcarded))
                 .latest('expiration_date'))
 
     @staticmethod
