@@ -96,7 +96,7 @@ class UserToken(models.Model):
 
 class UserTokenManager(object):
     @staticmethod
-    def insert_token(provider_user_id, token, expiration_date):
+    def insert_token(provider_user_id, token, expiration_date=None):
         provider_user_id = str(provider_user_id)
         defaults = {'provider_user_id': provider_user_id,
                     'expiration_date': expiration_date}
@@ -135,7 +135,7 @@ class FacebookTokenManager(object):
                                        ['user', 'expires', 'token'])
 
     @staticmethod
-    def insert_token(access_token, token_expiration_date, user_id):
+    def insert_token(access_token, user_id, token_expiration_date=None):
         token_manager = UserTokenManager()
         if getattr(settings, 'REQUEST_LONG_LIVED_ACCESS_TOKEN', False):
             insert_extended_token.delay(access_token, user_id)
@@ -144,7 +144,7 @@ class FacebookTokenManager(object):
 
     def discover_fresh_access_token(self, access_token):
         data = self.debug_token(access_token)
-        self.insert_token(access_token, data.expires, data.user)
+        self.insert_token(access_token, data.user, data.expires)
 
     @staticmethod
     def convert_expiration_seconds_to_date(seconds):

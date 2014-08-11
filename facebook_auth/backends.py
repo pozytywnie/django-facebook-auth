@@ -36,9 +36,7 @@ class UserFactory(object):
     def __create_username(self, profile):
             return profile['id']  # TODO better username
 
-    def _product_user(self, access_token, profile, token_expiration_date=None):
-        token_expiration_date = (token_expiration_date or
-                                 self._get_fallback_expiration_date())
+    def _product_user(self, access_token, profile):
         user_id = int(profile['id'])
         username = self.__create_username(profile)
         user, created = models.FacebookUser.objects.get_or_create(
@@ -57,17 +55,15 @@ class UserFactory(object):
         copy_field('last_name')
         if access_token is not None:
             models.FacebookTokenManager().insert_token(
-                access_token, token_expiration_date, str(user.user_id))
+                access_token, str(user.user_id))
         user.save()
         self.create_profile_object(profile, user)
         return user
 
-    def get_user(self, access_token, token_expiration_date=None):
-        token_expiration_date = (token_expiration_date or
-                                 self._get_fallback_expiration_date())
+    def get_user(self, access_token):
         profile = utils.get_from_graph_api(
             self.graph_api_class(access_token, timeout=FACEBOOK_TIMEOUT), 'me')
-        return self._product_user(access_token, profile, token_expiration_date)
+        return self._product_user(access_token, profile)
 
     def _get_fallback_expiration_date(self):
         logger.warning('Deprecated fallback expiration_date used.')
@@ -121,14 +117,12 @@ class FacebookBackend(object):
             raise
         try:
             access_token = urlparse.parse_qs(data)['access_token'][-1]
-            expires = urlparse.parse_qs(data)['expires'][-1]
         except KeyError as e:
             args['client_secret'] = '*******%s' % args['client_secret'][-4:]
             logger.error(e, extra={'facebook_response': data,
                                    'sent_args': args})
             return None
-        expires_at = self._timestamp_to_datetime(expires)
-        user = USER_FACTORY.get_user(access_token, expires_at)
+        user = USER_FACTORY.get_user(access_token)
         return user
 
     @staticmethod
@@ -144,5 +138,5 @@ class FacebookBackend(object):
 
 
 class FacebookJavascriptBackend(FacebookBackend):
-    def authenticate(self, access_token, token_expiration_date=None):
-        return USER_FACTORY.get_user(access_token, token_expiration_date)
+    def authenticate(self, access_token):
+        return USER_FACTORY.get_user(access_token)
