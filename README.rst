@@ -6,6 +6,8 @@ django-facebook-auth
 
 A stable Facebook authentication backend for Django >= 1.4.
 
+Starting from version 3.6.0 Django 1.7 is supported. South migrations are move to south_migrations so you need South 1.0 or newer to use them.
+
 Requires Celery for background token operations.
 
 
@@ -17,7 +19,7 @@ _______
 
 django-facebook-auth can be installed as a normal Python package.
 
-Example instalation for pip::
+Example installation for pip::
 
     $ pip install django-facebook-auth
 
