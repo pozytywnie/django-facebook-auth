@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'UserToken.granted_at'
         db.add_column('facebook_auth_usertoken', 'granted_at',
-                      self.gf('django.db.models.fields.DateTimeField')(blank=True, auto_now_add=True, default=timezone.now,
+                      self.gf('django.db.models.fields.DateTimeField')(blank=True, auto_now_add=True, default=timezone.now),
                       keep_default=False)
 
 
