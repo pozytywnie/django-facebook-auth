@@ -104,11 +104,6 @@ class UserTokenManager(object):
         obj, created = UserToken.objects.get_or_create(
             token=token, defaults=defaults)
         if not created:
-            if obj.expiration_date > expiration_date + timedelta(seconds=30):
-                extra = {'object_expiration_date': obj.expiration_date,
-                         'expiration_date': expiration_date,
-                         'token': token}
-                logger.warning('Got shorter expiration_date', extra=extra)
             obj.expiration_date = expiration_date
             obj.save()
 
