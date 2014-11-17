@@ -50,7 +50,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def graph(self):
-        return graph_api.ObservableGraphAPI(self._get_token_object().token)
+        return graph_api.get_graph(self._get_token_object().token)
 
     def _get_token_object(self):
         return UserTokenManager.get_access_token(self.user_id)
@@ -156,7 +156,7 @@ class FacebookTokenManager(object):
 
     @staticmethod
     def get_long_lived_access_token(access_token):
-        graph = graph_api.ObservableGraphAPI()
+        graph = graph_api.get_graph()
         args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'client_secret': settings.FACEBOOK_APP_SECRET,

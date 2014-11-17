@@ -1,7 +1,7 @@
 from django.conf import settings
 import facepy
 
-from facebook_auth.graph_api import ObservableGraphAPI
+from facebook_auth import graph_api
 
 GRAPH_MAX_TRIES = 3
 
@@ -17,5 +17,6 @@ def get_from_graph_api(graphAPI, query):
 
 def get_application_graph():
     token = facepy.utils.get_application_access_token(
-            settings.FACEBOOK_APP_ID, settings.FACEBOOK_APP_SECRET)
-    return ObservableGraphAPI(token)
+            settings.FACEBOOK_APP_ID, settings.FACEBOOK_APP_SECRET,
+            api_version='2.1')
+    return graph_api.get_graph(token)

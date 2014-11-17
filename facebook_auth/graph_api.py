@@ -26,6 +26,10 @@ GRAPH_OBSERVER_CLASSES = get_graph_observer_classes(FACEBOOK_GRAPH_OBSERVERS)
 logger = logging.getLogger(__name__)
 
 
+def get_graph(*args, **kwargs):
+    return ObservableGraphAPI(*args, version='2.1', **kwargs)
+
+
 class ObservableGraphAPI(facepy.GraphAPI):
     def __init__(self, *args, **kwargs):
         super(ObservableGraphAPI, self).__init__(*args, **kwargs)
