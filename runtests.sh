@@ -14,5 +14,5 @@ deactivate
 virtualenv .env3.3 --python=python3.3
 . .env3.3/bin/activate
 export PYTHONPATH=$PYTHONPATH:$(pwd)
-pip install django==1.6 psycopg2 django-jenkins pylint coverage pep8 pyflakes factory_boy django-celery facepy
+pip install django==1.6 psycopg2 django-jenkins pylint coverage pep8 pyflakes factory_boy django-celery facepy-pozytywnie==1.0.5
 python runtests.py

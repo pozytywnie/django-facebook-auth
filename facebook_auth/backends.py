@@ -1,7 +1,7 @@
 from datetime import datetime
 import logging
 
-from facebook_auth.graph_api import ObservableGraphAPI
+from facebook_auth import graph_api
 
 try:
     import urllib.parse as urlparse
@@ -29,7 +29,6 @@ FACEBOOK_TIMEOUT = getattr(settings, 'FACEBOOK_AUTH_BACKEND_FACEBOOK_TIMEOUT',
 
 
 class UserFactory(object):
-    graph_api_class = ObservableGraphAPI
     fallback_expiration_date = datetime(1990, 10, 10, 0, 0, 1).replace(
         tzinfo=timezone.utc)
 
@@ -62,8 +61,8 @@ class UserFactory(object):
 
     def get_user(self, access_token):
         profile = utils.get_from_graph_api(
-            self.graph_api_class(access_token, timeout=FACEBOOK_TIMEOUT),
-            'v2.1/me')
+            graph_api.get_graph(access_token, timeout=FACEBOOK_TIMEOUT),
+            'me')
         return self._product_user(access_token, profile)
 
     def _get_fallback_expiration_date(self):
@@ -71,7 +70,7 @@ class UserFactory(object):
         return self.fallback_expiration_date
 
     def get_user_by_id(self, uid):
-        graph_api = self.graph_api_class(timeout=FACEBOOK_TIMEOUT)
+        graph_api = graph_api.get_graph(timeout=FACEBOOK_TIMEOUT)
         profile = utils.get_from_graph_api(graph_api, uid)
         return self._product_user(None, profile)
 
@@ -95,7 +94,7 @@ USER_FACTORY = UserFactory()
 
 class FacebookBackend(object):
     def authenticate(self, code=None, redirect_uri=None):
-        graph = ObservableGraphAPI(timeout=FACEBOOK_TIMEOUT)
+        graph = graph_api.get_graph(timeout=FACEBOOK_TIMEOUT)
         args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'client_secret': settings.FACEBOOK_APP_SECRET,

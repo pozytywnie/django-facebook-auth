@@ -86,18 +86,17 @@ class UserFactoryTest(test.TestCase):
         self.assertEqual(user.email, '')
 
 
+@mock.patch('facebook_auth.graph_api.get_graph')
 class UserFactoryOnErrorTest(test.TestCase):
-    def test_success(self):
+    def test_success(self, get_graph):
         factory = UserFactory()
-        factory.graph_api_class = mock.Mock()
-        factory.graph_api_class.return_value.get.return_value = {'id': '123'}
+        get_graph.return_value.get.return_value = {'id': '123'}
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
-    def test_success_in_retry(self):
+    def test_success_in_retry(self, get_graph):
         factory = UserFactory()
-        factory.graph_api_class = mock.Mock()
-        factory.graph_api_class.return_value.get.side_effect = [
+        get_graph.return_value.get.side_effect = [
             FacebookError("msg", 1),
             FacebookError("msg", 1),
             {'id': '123'}]
@@ -105,10 +104,9 @@ class UserFactoryOnErrorTest(test.TestCase):
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
-    def test_failure(self):
+    def test_failure(self, get_graph):
         factory = UserFactory()
-        factory.graph_api_class = mock.Mock()
-        factory.graph_api_class.return_value.get.side_effect = [
+        get_graph.return_value.get.side_effect = [
             FacebookError("msg", 1),
             FacebookError("msg", 1),
             FacebookError("msg", 1),
