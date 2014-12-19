@@ -174,7 +174,7 @@ class FacebookTokenManager(object):
 
     def debug_token(self, token):
         graph = utils.get_application_graph()
-        response = graph.get('v2.1/debug_token', input_token=token)
+        response = graph.get('/debug_token', input_token=token)
         parsed_response = forms.parse_facebook_response(response, token)
         if parsed_response.is_valid:
             data = parsed_response.parsed_data
