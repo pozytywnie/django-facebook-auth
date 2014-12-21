@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_graph(*args, **kwargs):
-    return ObservableGraphAPI(*args, version='2.1', **kwargs)
+    version = getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
+    return ObservableGraphAPI(*args, version=version, **kwargs)
 
 
 class ObservableGraphAPI(facepy.GraphAPI):
