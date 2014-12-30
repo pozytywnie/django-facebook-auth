@@ -70,8 +70,10 @@ class UserFactory(object):
         return self.fallback_expiration_date
 
     def get_user_by_id(self, uid):
-        graph_api = graph_api.get_graph(timeout=FACEBOOK_TIMEOUT)
-        profile = utils.get_from_graph_api(graph_api, uid)
+        api = utils.get_application_graph(
+            version=settings.FACEBOOK_API_VERSION
+        )
+        profile = utils.get_from_graph_api(api, uid)
         return self._product_user(None, profile)
 
     def create_profile_object(self, profile, user):
