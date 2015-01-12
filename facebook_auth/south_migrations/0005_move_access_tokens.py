@@ -8,9 +8,11 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         for user in orm['facebook_auth.FacebookUser'].objects.exclude(access_token__isnull=True):
-            orm['facebook_auth.UserToken'].objects.get_or_create(provider_user_id=user.user_id,
-                                                                 token=user.access_token,
-                                                                 expiration_date=user.access_token_expiration_date)
+            if user.access_token:
+                orm['facebook_auth.UserToken'].objects.get_or_create(
+                    provider_user_id=user.user_id, token=user.access_token,
+                    expiration_date=user.access_token_expiration_date
+                )
 
     def backwards(self, orm):
         pass
