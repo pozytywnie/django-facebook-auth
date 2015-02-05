@@ -95,6 +95,10 @@ class UserToken(models.Model):
         verbose_name_plural = 'User tokens'
 
 
+class TokenDebugException(Exception):
+    pass
+
+
 class UserTokenManager(object):
     @staticmethod
     def insert_token(provider_user_id, token, expiration_date=None):
@@ -182,8 +186,8 @@ class FacebookTokenManager(object):
             self._update_scope(data)
             return self.get_token_info(data)
         else:
-            raise ValueError('Invalid Facebook response.',
-                             {'errors': parsed_response.errors})
+            raise TokenDebugException('Invalid Facebook response.',
+                                      {'errors': parsed_response.errors})
 
     def _update_scope(self, data):
         if 'scopes' in data:
@@ -201,7 +205,7 @@ def validate_token(access_token):
     manager = FacebookTokenManager()
     try:
         manager.debug_token(access_token)
-    except ValueError:
+    except TokenDebugException:
         logger.info('Invalid access token')
         token_manager = UserTokenManager()
         token_manager.invalidate_access_token(access_token)
@@ -242,7 +246,7 @@ def debug_all_tokens_for_user(user_id):
     for token in user_tokens:
         try:
             data = manager.debug_token(token)
-        except ValueError:
+        except TokenDebugException:
             logger.info('Invalid access token')
             token_manager.invalidate_access_token(token)
         else:
