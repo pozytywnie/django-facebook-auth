@@ -177,8 +177,7 @@ class FacebookTokenManager(object):
         return access_token, expires_in_seconds
 
     def debug_token(self, token):
-        version = getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
-        graph = utils.get_application_graph(version)
+        graph = utils.get_application_graph()
         response = graph.get('/debug_token', input_token=token)
         parsed_response = forms.parse_facebook_response(response, token)
         if parsed_response.is_valid:

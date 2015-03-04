@@ -15,7 +15,8 @@ def get_from_graph_api(graphAPI, query):
                 raise
 
 
-def get_application_graph(version):
+def get_application_graph(version=None):
+    version = version or getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
     token = (facepy.utils
              .get_application_access_token(settings.FACEBOOK_APP_ID,
                                            settings.FACEBOOK_APP_SECRET,
