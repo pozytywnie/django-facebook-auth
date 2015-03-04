@@ -39,7 +39,16 @@ class UserFactory(object):
         user_id = int(profile['id'])
         username = self.__create_username(profile)
         user, created = models.FacebookUser.objects.get_or_create(
-                user_id=user_id, username=username)
+            user_id=user_id, defaults={'username': username})
+
+        if user.username != username:
+            logger.warning('FacebookUser username mismatch', extra={
+                'old_username': user.username,
+                'new_username': username,
+                'user_django_id': user.id,
+                'user_facebook_id': user_id,
+                'user_email': user.email
+            })
         if created:
             user.set_unusable_password()
 
