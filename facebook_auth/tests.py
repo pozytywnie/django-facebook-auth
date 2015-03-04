@@ -359,7 +359,7 @@ class TestDebugAllTokensForUser(test.TestCase):
     @mock.patch.object(models, 'FacebookTokenManager')
     def test_negative_scenario(self, FacebookTokenManager):
         manager = FacebookTokenManager.return_value
-        manager.debug_token.side_effect = ValueError
+        manager.debug_token.side_effect = models.TokenDebugException
         token_manager = models.UserTokenManager()
         token_manager.insert_token('123', 'token1212', "2014-02-02")
         models.debug_all_tokens_for_user('123')
