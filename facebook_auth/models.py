@@ -229,8 +229,12 @@ def insert_extended_token(access_token, user_id):
 @receiver(models.signals.post_save, sender=UserToken)
 def dispatch_engines_run(sender, instance, created, **kwargs):
     if created:
-        debug_all_tokens_for_user.apply_async(args=[instance.provider_user_id],
-                                              countdown=45)
+        try:
+            debug_all_tokens_for_user.apply_async(
+                args=[instance.provider_user_id], countdown=45)
+        except OSError:
+            logger.error("Couldn't run debug_all_tokens_for_user due to celery"
+                         " connection error.")
 
 
 @task()
