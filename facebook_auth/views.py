@@ -27,12 +27,15 @@ class Handler(generic.View):
                 self.login()
             except facepy.FacepyError as e:
                 return self.handle_facebook_error(e)
-            response = http.HttpResponseRedirect(self.next_url['next'])
+            response = http.HttpResponseRedirect(self._get_success_url())
             response["P3P"] = ('CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi'
                                ' IVDi CONi HIS OUR IND CNT"')
         else:
             response = http.HttpResponseRedirect(self.next_url['close'])
         return response
+
+    def _get_success_url(self):
+        return self.next_url['next']
 
     def _get_next_from_request(self, request):
         if 'next' in request.GET:
@@ -43,10 +46,13 @@ class Handler(generic.View):
     def login(self):
         user = authenticate(
             code=self.request.GET['code'],
-            redirect_uri=urls.redirect_uri(self.next_url['next'],
-                                           self.next_url['close']))
+            redirect_uri=self._get_redirect_uri())
         if user:
             login(self.request, user)
+
+    def _get_redirect_uri(self):
+        return urls.redirect_uri(self.next_url['next'],
+                                 self.next_url['close'])
 
     def handle_facebook_error(self, e):
         return http.HttpResponseRedirect(self.next_url['next'])
