@@ -127,14 +127,27 @@ class FacebookBackend(object):
             logger.warning("Facebook login connection error")
             raise
         try:
-            access_token = urlparse.parse_qs(data)['access_token'][-1]
-        except KeyError as e:
+            access_token = self._extract_access_token(data)
+        except TokenParsingError as e:
             args['client_secret'] = '*******%s' % args['client_secret'][-4:]
             logger.error(e, extra={'facebook_response': data,
                                    'sent_args': args})
             return None
-        user = USER_FACTORY.get_user(access_token)
-        return user
+        else:
+            user = USER_FACTORY.get_user(access_token)
+            return user
+
+    def _extract_access_token(self, data):
+        if isinstance(data, dict):
+            try:
+                return data['access_token']
+            except KeyError as e:
+                raise TokenParsingError(e)
+        else:
+            try:
+                return urlparse.parse_qs(data)['access_token'][-1]
+            except KeyError as e:
+                raise TokenParsingError(e)
 
     @staticmethod
     def _timestamp_to_datetime(timestamp):
@@ -151,3 +164,7 @@ class FacebookBackend(object):
 class FacebookJavascriptBackend(FacebookBackend):
     def authenticate(self, access_token):
         return USER_FACTORY.get_user(access_token)
+
+
+class TokenParsingError(Exception):
+    pass
