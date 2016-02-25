@@ -2,10 +2,9 @@ import importlib
 import logging
 
 import facepy
-from facepy.exceptions import FacebookError
-
 from django.conf import settings
 from django.utils import timezone
+from facepy.exceptions import FacebookError
 
 
 def get_class(class_name):
@@ -24,11 +23,6 @@ GRAPH_OBSERVER_CLASSES = get_graph_observer_classes(FACEBOOK_GRAPH_OBSERVERS)
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_graph(*args, **kwargs):
-    version = getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
-    return ObservableGraphAPI(*args, version=version, **kwargs)
 
 
 class ObservableGraphAPI(facepy.GraphAPI):

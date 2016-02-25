@@ -1,7 +1,5 @@
-from datetime import datetime
 import logging
-
-from facebook_auth import graph_api
+from datetime import datetime
 
 try:
     import urllib.parse as urlparse
@@ -10,10 +8,12 @@ except ImportError:
 
 from django.conf import settings
 from django.utils import timezone
+
 from facepy import exceptions
 
 from facebook_auth import models
 from facebook_auth import utils
+from facebook_auth.facepy_wrapper.utils import TokenParsingError
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,6 @@ def _truncate(word, length, to_zero=False):
         return word[0:0] # preserve type
     else:
         return word[:length]
-
-FACEBOOK_TIMEOUT = getattr(settings, 'FACEBOOK_AUTH_BACKEND_FACEBOOK_TIMEOUT',
-                           timezone.timedelta(seconds=20).total_seconds())
 
 
 class UserFactory(object):
@@ -70,7 +67,7 @@ class UserFactory(object):
 
     def get_user(self, access_token):
         profile = utils.get_from_graph_api(
-            graph_api.get_graph(access_token, timeout=FACEBOOK_TIMEOUT),
+            utils.get_graph(access_token),
             'me')
         return self._product_user(access_token, profile)
 
@@ -105,15 +102,8 @@ USER_FACTORY = UserFactory()
 
 class FacebookBackend(object):
     def authenticate(self, code=None, redirect_uri=None):
-        graph = graph_api.get_graph(timeout=FACEBOOK_TIMEOUT)
-        args = {
-            'client_id': settings.FACEBOOK_APP_ID,
-            'client_secret': settings.FACEBOOK_APP_SECRET,
-            'redirect_uri': redirect_uri,
-            'code': code
-        }
         try:
-            data = graph.get('/oauth/access_token', **args)
+            access_token = utils.get_access_token(code=code, redirect_uri=redirect_uri)
         except exceptions.FacebookError as e:
             message = "Facebook login failed %s" % e.message
             code_used_message = 'This authorization code has been used.'
@@ -123,31 +113,11 @@ class FacebookBackend(object):
             else:
                 logger.warning(message)
                 raise
-        except exceptions.FacepyError as e:
-            logger.warning("Facebook login connection error")
-            raise
-        try:
-            access_token = self._extract_access_token(data)
-        except TokenParsingError as e:
-            args['client_secret'] = '*******%s' % args['client_secret'][-4:]
-            logger.error(e, extra={'facebook_response': data,
-                                   'sent_args': args})
+        except TokenParsingError:
             return None
         else:
             user = USER_FACTORY.get_user(access_token)
             return user
-
-    def _extract_access_token(self, data):
-        if isinstance(data, dict):
-            try:
-                return data['access_token']
-            except KeyError as e:
-                raise TokenParsingError(e)
-        else:
-            try:
-                return urlparse.parse_qs(data)['access_token'][-1]
-            except KeyError as e:
-                raise TokenParsingError(e)
 
     @staticmethod
     def _timestamp_to_datetime(timestamp):
@@ -164,7 +134,3 @@ class FacebookBackend(object):
 class FacebookJavascriptBackend(FacebookBackend):
     def authenticate(self, access_token):
         return USER_FACTORY.get_user(access_token)
-
-
-class TokenParsingError(Exception):
-    pass
