@@ -19,7 +19,7 @@ from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
 from facebook_auth.backends import FacebookBackend
 from facebook_auth import forms
-from facebook_auth import graph_api
+from facebook_auth.facepy_wrapper import graph_api
 from facebook_auth import models
 from facebook_auth import urls
 from facebook_auth import views
@@ -87,7 +87,7 @@ class UserFactoryTest(test.TestCase):
         self.assertEqual(user.email, '')
 
 
-@mock.patch('facebook_auth.graph_api.get_graph')
+@mock.patch('facebook_auth.utils.get_graph')
 class UserFactoryOnErrorTest(test.TestCase):
     def test_success(self, get_graph):
         factory = UserFactory()
@@ -118,7 +118,7 @@ class UserFactoryOnErrorTest(test.TestCase):
 
 @mock.patch('django.utils.timezone.now')
 @mock.patch('facepy.GraphAPI._query')
-@mock.patch('facebook_auth.graph_api.GRAPH_OBSERVER_CLASSES')
+@mock.patch('facebook_auth.facepy_wrapper.graph_api.GRAPH_OBSERVER_CLASSES')
 class ObservableGraphApiTest(test.SimpleTestCase):
     def test_query_failure(self, observers, query, now):
         now.side_effect = [

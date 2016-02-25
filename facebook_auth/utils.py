@@ -1,7 +1,7 @@
-from django.conf import settings
 import facepy
+from django.conf import settings
 
-from facebook_auth import graph_api
+from . facepy_wrapper import utils
 
 GRAPH_MAX_TRIES = 3
 
@@ -21,4 +21,9 @@ def get_application_graph(version=None):
              .get_application_access_token(settings.FACEBOOK_APP_ID,
                                            settings.FACEBOOK_APP_SECRET,
                                            api_version=version))
-    return graph_api.get_graph(token)
+    return get_graph(token)
+
+
+def get_graph(*args, **kwargs):
+    version = getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
+    return utils.get_graph(*args, version=version, **kwargs)

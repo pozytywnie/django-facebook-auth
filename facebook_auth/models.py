@@ -1,7 +1,7 @@
 import collections
-from datetime import timedelta
 import json
 import logging
+from datetime import timedelta
 
 try:
     from urllib.error import HTTPError
@@ -14,7 +14,6 @@ except ImportError:
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.db import models
-from django.db.models import Q
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -22,7 +21,6 @@ from celery import task
 from facepy import exceptions
 
 from facebook_auth import forms
-from facebook_auth import graph_api
 from facebook_auth import utils
 
 logger = logging.getLogger(__name__)
@@ -50,7 +48,7 @@ class FacebookUser(auth_models.User):
 
     @property
     def graph(self):
-        return graph_api.get_graph(self._get_token_object().token)
+        return utils.get_graph(self._get_token_object().token)
 
     def _get_token_object(self):
         return UserTokenManager.get_access_token(self.user_id)
@@ -160,7 +158,7 @@ class FacebookTokenManager(object):
 
     @staticmethod
     def get_long_lived_access_token(access_token):
-        graph = graph_api.get_graph()
+        graph = utils.get_graph()
         args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'client_secret': settings.FACEBOOK_APP_SECRET,

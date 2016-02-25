@@ -1,7 +1,5 @@
-from datetime import datetime
 import logging
-
-from facebook_auth import graph_api
+from datetime import datetime
 
 try:
     import urllib.parse as urlparse
@@ -70,7 +68,7 @@ class UserFactory(object):
 
     def get_user(self, access_token):
         profile = utils.get_from_graph_api(
-            graph_api.get_graph(access_token, timeout=FACEBOOK_TIMEOUT),
+            utils.get_graph(access_token, timeout=FACEBOOK_TIMEOUT),
             'me')
         return self._product_user(access_token, profile)
 
@@ -105,7 +103,7 @@ USER_FACTORY = UserFactory()
 
 class FacebookBackend(object):
     def authenticate(self, code=None, redirect_uri=None):
-        graph = graph_api.get_graph(timeout=FACEBOOK_TIMEOUT)
+        graph = utils.get_graph(timeout=FACEBOOK_TIMEOUT)
         args = {
             'client_id': settings.FACEBOOK_APP_ID,
             'client_secret': settings.FACEBOOK_APP_SECRET,

@@ -26,5 +26,6 @@ setup(
         'facebook_auth.management',
         'facebook_auth.management.commands',
         'facebook_auth.south_migrations',
+        'facebook_auth.facepy_wrapper',
     ],
 )
