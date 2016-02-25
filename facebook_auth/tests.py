@@ -426,13 +426,15 @@ class HandlerAcceptanceTest(test.TestCase):
 
 class FacebookBackendTest(test.TestCase):
     def test_extract_access_token_pre2_3(self):
-        access_token = utils._extract_access_token('access_token=token&expires_in=5121505')
-        self.assertEqual('token', access_token)
+        access_token = utils._parse_access_token_response('access_token=token&expires=5121505')
+        self.assertEqual('token', access_token.access_token)
+        self.assertEqual(5121505, access_token.expires_in_seconds)
 
     def test_extract_access_token_post2_3(self):
-        access_token = utils._extract_access_token({
+        access_token = utils._parse_access_token_response({
             'access_token': 'token',
             'expires_in': 5121505,
             'token_type': 'bearer'
         })
-        self.assertEqual('token', access_token)
+        self.assertEqual('token', access_token.access_token)
+        self.assertEqual(5121505, access_token.expires_in_seconds)

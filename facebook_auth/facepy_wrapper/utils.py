@@ -1,3 +1,4 @@
+import collections
 import logging
 
 from facepy import exceptions
@@ -10,6 +11,8 @@ except ImportError:
     import urlparse
 
 logger = logging.getLogger(__name__)
+
+AccessTokenResponse = collections.namedtuple('AccessTokenResponse', ['access_token', 'expires_in_seconds'])
 
 
 def get_graph(*args, **kwargs):
@@ -26,12 +29,10 @@ def get_long_lived_access_token(access_token, client_id, client_secret):
     }
     data = graph.get('/oauth/access_token', **args)
     try:
-        access_token = urlparse.parse_qs(data)['access_token'][-1]
-        expires_in_seconds = int(urlparse.parse_qs(data)['expires'][-1])
-    except KeyError:
+        return _parse_access_token_response(data)
+    except TokenParsingError:
         logger.warning('Invalid Facebook response.')
-        raise FacebookError
-    return access_token, expires_in_seconds
+        raise
 
 
 def get_access_token(client_id, client_secret, code=None, redirect_uri=None, timeout=None):
@@ -48,7 +49,7 @@ def get_access_token(client_id, client_secret, code=None, redirect_uri=None, tim
         logger.warning("Facebook login connection error")
         raise
     try:
-        return _extract_access_token(data)
+        return _parse_access_token_response(data).access_token
     except TokenParsingError as e:
         args['client_secret'] = '*******%s' % args['client_secret'][-4:]
         logger.error(e, extra={'facebook_response': data,
@@ -56,17 +57,21 @@ def get_access_token(client_id, client_secret, code=None, redirect_uri=None, tim
         raise
 
 
-def _extract_access_token(data):
+def _parse_access_token_response(data):
     if isinstance(data, dict):
         try:
-            return data['access_token']
+            access_token = data['access_token']
+            expires_in_seconds = int(data['expires_in'])
         except KeyError as e:
             raise TokenParsingError(e)
     else:
+        parsed_qs_data = urlparse.parse_qs(data)
         try:
-            return urlparse.parse_qs(data)['access_token'][-1]
+            access_token = parsed_qs_data['access_token'][-1]
+            expires_in_seconds = int(parsed_qs_data['expires'][-1])
         except KeyError as e:
             raise TokenParsingError(e)
+    return AccessTokenResponse(access_token=access_token, expires_in_seconds=expires_in_seconds)
 
 
 class FacebookError(Exception):

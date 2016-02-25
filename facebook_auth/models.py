@@ -20,7 +20,7 @@ from facepy import exceptions
 
 from facebook_auth import forms
 from facebook_auth import utils
-from facebook_auth.facepy_wrapper.utils import FacebookError
+from facebook_auth.facepy_wrapper.utils import TokenParsingError
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +196,7 @@ def insert_extended_token(access_token, user_id):
     try:
         access_token, expires_in_seconds = manager.get_long_lived_access_token(
             access_token)
-    except (exceptions.FacebookError, FacebookError, HTTPError):
+    except (exceptions.FacebookError, TokenParsingError, HTTPError):
         pass
     else:
         token_expiration_date = manager.convert_expiration_seconds_to_date(
