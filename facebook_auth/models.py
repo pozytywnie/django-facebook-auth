@@ -5,9 +5,7 @@ from datetime import timedelta
 
 try:
     from urllib.error import HTTPError
-    import urllib.parse as urlparse
 except ImportError:
-    import urlparse
     from urllib2 import HTTPError
 
 
@@ -22,12 +20,9 @@ from facepy import exceptions
 
 from facebook_auth import forms
 from facebook_auth import utils
+from facebook_auth.facepy_wrapper.utils import FacebookError
 
 logger = logging.getLogger(__name__)
-
-
-class FacebookError(Exception):
-    pass
 
 
 class FacebookUser(auth_models.User):
@@ -158,21 +153,7 @@ class FacebookTokenManager(object):
 
     @staticmethod
     def get_long_lived_access_token(access_token):
-        graph = utils.get_graph()
-        args = {
-            'client_id': settings.FACEBOOK_APP_ID,
-            'client_secret': settings.FACEBOOK_APP_SECRET,
-            'grant_type': 'fb_exchange_token',
-            'fb_exchange_token': access_token,
-        }
-        data = graph.get('/oauth/access_token', **args)
-        try:
-            access_token = urlparse.parse_qs(data)['access_token'][-1]
-            expires_in_seconds = int(urlparse.parse_qs(data)['expires'][-1])
-        except KeyError:
-            logger.warning('Invalid Facebook response.')
-            raise FacebookError
-        return access_token, expires_in_seconds
+        return utils.get_long_lived_access_token(access_token)
 
     def debug_token(self, token):
         graph = utils.get_application_graph()

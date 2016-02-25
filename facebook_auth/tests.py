@@ -17,8 +17,8 @@ import pytz
 
 from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
-from facebook_auth.backends import FacebookBackend
 from facebook_auth import forms
+from facebook_auth.facepy_wrapper import utils
 from facebook_auth.facepy_wrapper import graph_api
 from facebook_auth import models
 from facebook_auth import urls
@@ -426,13 +426,11 @@ class HandlerAcceptanceTest(test.TestCase):
 
 class FacebookBackendTest(test.TestCase):
     def test_extract_access_token_pre2_3(self):
-        backend = FacebookBackend()
-        access_token = backend._extract_access_token('access_token=token&expires_in=5121505')
+        access_token = utils._extract_access_token('access_token=token&expires_in=5121505')
         self.assertEqual('token', access_token)
 
     def test_extract_access_token_post2_3(self):
-        backend = FacebookBackend()
-        access_token = backend._extract_access_token({
+        access_token = utils._extract_access_token({
             'access_token': 'token',
             'expires_in': 5121505,
             'token_type': 'bearer'
