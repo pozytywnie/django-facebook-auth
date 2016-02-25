@@ -7,6 +7,7 @@ from . facepy_wrapper import utils
 GRAPH_MAX_TRIES = 3
 FACEBOOK_TIMEOUT = getattr(settings, 'FACEBOOK_AUTH_BACKEND_FACEBOOK_TIMEOUT',
                            timezone.timedelta(seconds=20).total_seconds())
+FACEBOOK_API_VERSION = getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
 
 
 def get_from_graph_api(graphAPI, query):
@@ -19,7 +20,7 @@ def get_from_graph_api(graphAPI, query):
 
 
 def get_application_graph(version=None):
-    version = version or getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
+    version = version or FACEBOOK_API_VERSION
     token = (facepy.utils
              .get_application_access_token(settings.FACEBOOK_APP_ID,
                                            settings.FACEBOOK_APP_SECRET,
@@ -28,7 +29,7 @@ def get_application_graph(version=None):
 
 
 def get_graph(*args, **kwargs):
-    version = getattr(settings, 'FACEBOOK_API_VERSION', '2.1')
+    version = FACEBOOK_API_VERSION
     return utils.get_graph(*args, version=version, timeout=FACEBOOK_TIMEOUT, **kwargs)
 
 
