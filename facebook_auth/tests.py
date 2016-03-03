@@ -10,6 +10,7 @@ except ImportError:
 import collections
 import datetime
 
+from django.core.cache import cache
 from django import test
 
 from facepy.exceptions import FacebookError
@@ -345,6 +346,9 @@ class TestParseFacebookResponse(test.SimpleTestCase):
 
 
 class TestDebugAllTokensForUser(test.TestCase):
+    def tearDown(self):
+        cache.clear()
+
     @mock.patch.object(models, 'FacebookTokenManager')
     def test_positive_scenario(self, FacebookTokenManager):
         manager = FacebookTokenManager.return_value
@@ -366,6 +370,23 @@ class TestDebugAllTokensForUser(test.TestCase):
         models.debug_all_tokens_for_user('123')
         self.assertRaises(models.UserToken.DoesNotExist,
                           token_manager.get_access_token, '123')
+
+    @mock.patch('facebook_auth.models.debug_all_tokens_for_user')
+    def test_caching_for_single_user(self, debug_all_tokens_for_user):
+        models.FacebookTokenManager.debug_all_user_tokens(1)
+        models.FacebookTokenManager.debug_all_user_tokens(1)
+        self.assertEqual([
+            mock.call.apply_async(args=[1], countdown=45),
+        ], debug_all_tokens_for_user.mock_calls)
+
+    @mock.patch('facebook_auth.models.debug_all_tokens_for_user')
+    def test_caching_for_two_users(self, debug_all_tokens_for_user):
+        models.FacebookTokenManager.debug_all_user_tokens(1)
+        models.FacebookTokenManager.debug_all_user_tokens(2)
+        self.assertEqual([
+            mock.call.apply_async(args=[1], countdown=45),
+            mock.call.apply_async(args=[2], countdown=45),
+        ], debug_all_tokens_for_user.mock_calls)
 
 
 class TestNextUrl(test.TestCase):
