@@ -105,7 +105,7 @@ class UserTokenManager(object):
             obj.save()
 
         if obj.provider_user_id != provider_user_id:
-            extra = {'object_provider_user_id': object.provider_user_id,
+            extra = {'object_provider_user_id': obj.provider_user_id,
                      'provider_user_id': provider_user_id,
                      'provider_user_id_type': type(provider_user_id)}
             logger.warning('Got different provider_user_id for token.',
