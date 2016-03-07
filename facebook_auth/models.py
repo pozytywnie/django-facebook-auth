@@ -10,6 +10,7 @@ except ImportError:
 
 
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth import models as auth_models
 from django.db import models
 from django.dispatch import receiver
@@ -105,7 +106,7 @@ class UserTokenManager(object):
             obj.save()
 
         if obj.provider_user_id != provider_user_id:
-            extra = {'object_provider_user_id': object.provider_user_id,
+            extra = {'object_provider_user_id': obj.provider_user_id,
                      'provider_user_id': provider_user_id,
                      'provider_user_id_type': type(provider_user_id)}
             logger.warning('Got different provider_user_id for token.',
@@ -132,6 +133,7 @@ class UserTokenManager(object):
 
 
 class FacebookTokenManager(object):
+    DEBUG_ALL_USER_TOKENS_PERIOD = getattr(settings, 'FACEBOOK_AUTH_DEBUG_ALL_USER_TOKENS_PERIOD', timedelta(minutes=5))
     TokenInfo = collections.namedtuple('TokenInfo',
                                        ['user', 'expires', 'token'])
 
@@ -177,6 +179,18 @@ class FacebookTokenManager(object):
                               user=str(response_data['user_id']),
                               expires=response_data['expires_at'])
 
+    @classmethod
+    def debug_all_user_tokens(cls, user_id):
+        key = 'facebook_auth_debug_all_user_tokens-{}'.format(user_id)
+        if cache.get(key) is None:
+            cache.set(key, 1, cls.DEBUG_ALL_USER_TOKENS_PERIOD.total_seconds())
+            try:
+                debug_all_tokens_for_user.apply_async(
+                    args=[user_id], countdown=45)
+            except OSError:
+                logger.error("Couldn't run debug_all_tokens_for_user due to celery"
+                             " connection error.")
+
 
 @task()
 def validate_token(access_token):
@@ -208,12 +222,7 @@ def insert_extended_token(access_token, user_id):
 @receiver(models.signals.post_save, sender=UserToken)
 def dispatch_engines_run(sender, instance, created, **kwargs):
     if created:
-        try:
-            debug_all_tokens_for_user.apply_async(
-                args=[instance.provider_user_id], countdown=45)
-        except OSError:
-            logger.error("Couldn't run debug_all_tokens_for_user due to celery"
-                         " connection error.")
+        FacebookTokenManager.debug_all_user_tokens(instance.provider_user_id)
 
 
 @task()
