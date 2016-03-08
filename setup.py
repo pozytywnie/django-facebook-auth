@@ -11,6 +11,7 @@ setup(
     version='3.8.2',
     description="Authorisation app for Facebook API.",
     long_description=read("README.rst"),
+    url="https://github.com/pozytywnie/django-facebook-auth",
     maintainer="Tomasz Wysocki",
     maintainer_email="tomasz@wysocki.info",
 
