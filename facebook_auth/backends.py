@@ -26,6 +26,8 @@ def _truncate(word, length, to_zero=False):
 
 
 class UserFactory(object):
+    user_facebook_fields = ['first_name', 'last_name', 'email', 'name']
+
     fallback_expiration_date = datetime(1990, 10, 10, 0, 0, 1).replace(
         tzinfo=timezone.utc)
 
@@ -66,9 +68,10 @@ class UserFactory(object):
         return user
 
     def get_user(self, access_token):
+        fields = ','.join(self.user_facebook_fields)
         profile = utils.get_from_graph_api(
             utils.get_graph(access_token),
-            'me?fields=first_name,last_name,email,name')
+            'me?fields=%s' % fields)
         return self._product_user(access_token, profile)
 
     def _get_fallback_expiration_date(self):
