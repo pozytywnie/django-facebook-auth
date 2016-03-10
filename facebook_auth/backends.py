@@ -68,7 +68,7 @@ class UserFactory(object):
     def get_user(self, access_token):
         profile = utils.get_from_graph_api(
             utils.get_graph(access_token),
-            'me')
+            'me?fields=first_name,last_name,email,name')
         return self._product_user(access_token, profile)
 
     def _get_fallback_expiration_date(self):
