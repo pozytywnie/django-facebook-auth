@@ -51,7 +51,7 @@ class UserFactory(object):
 
         def copy_field(field, to_zero=False):
             if field in profile:
-                length = user._meta.get_field_by_name(field)[0].max_length
+                length = user._meta.get_field(field).max_length
                 setattr(user, field, _truncate(profile[field], length,
                         to_zero=to_zero))
 
