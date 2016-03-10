@@ -39,10 +39,6 @@ class FacebookUser(auth_models.User):
             return None
 
     @property
-    def access_token_expiration_date(self):
-        return self._get_token_object().expiration_date
-
-    @property
     def graph(self):
         return utils.get_graph(self._get_token_object().token)
 
