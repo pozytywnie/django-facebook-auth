@@ -2,6 +2,7 @@ import collections
 import json
 import logging
 from datetime import timedelta
+from cached_property import cached_property
 
 try:
     from urllib.error import HTTPError
@@ -34,19 +35,16 @@ class FacebookUser(auth_models.User):
     @property
     def access_token(self):
         try:
-            return self._get_token_object().token
+            return self._token_object.token
         except UserToken.DoesNotExist:
             return None
 
     @property
-    def access_token_expiration_date(self):
-        return self._get_token_object().expiration_date
-
-    @property
     def graph(self):
-        return utils.get_graph(self._get_token_object().token)
+        return utils.get_graph(self._token_object.token)
 
-    def _get_token_object(self):
+    @cached_property
+    def _token_object(self):
         return UserTokenManager.get_access_token(self.user_id)
 
     @property

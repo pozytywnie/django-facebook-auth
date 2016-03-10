@@ -19,6 +19,7 @@ setup(
         'celery',
         'Django<1.8',
         'facepy>=1.0.6',
+        'cached_property',
     ),
 
     packages=[
