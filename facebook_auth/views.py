@@ -7,7 +7,7 @@ from django.views import generic
 
 import facepy
 
-from facebook_auth import urls
+from facebook_auth import utils
 
 
 logger = logging.getLogger(__name__)
@@ -17,8 +17,8 @@ class Handler(generic.View):
     def get(self, request):
         try:
             got_next = self._get_next_from_request(request)
-            self.next_url = urls.Next().decode(got_next)
-        except urls.InvalidNextUrl:
+            self.next_url = utils.Next().decode(got_next)
+        except utils.InvalidNextUrl:
             logger.warning('Invalid facebook handler next.',
                            extra={'request': request})
             return http.HttpResponseBadRequest()
@@ -41,7 +41,7 @@ class Handler(generic.View):
         if 'next' in request.GET:
             return request.GET['next']
         else:
-            raise urls.InvalidNextUrl
+            raise utils.InvalidNextUrl
 
     def login(self):
         user = authenticate(
@@ -51,7 +51,7 @@ class Handler(generic.View):
             login(self.request, user)
 
     def _get_redirect_uri(self):
-        return urls.redirect_uri(self.next_url['next'],
+        return utils.redirect_uri(self.next_url['next'],
                                  self.next_url['close'])
 
     def handle_facebook_error(self, e):
