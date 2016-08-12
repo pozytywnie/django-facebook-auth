@@ -2,7 +2,6 @@ import sys
 
 from django.conf import settings
 from django.core.management import execute_from_command_line
-import djcelery
 
 LEGACY = len(sys.argv) == 2 and sys.argv[1] == 'legacy'
 OUTPUT_DIR = 'reports' if LEGACY else 'reports3.3'
@@ -27,12 +26,9 @@ if not settings.configured:
             'django.contrib.sessions',
             'django.contrib.sites',
             'django.contrib.messages',
-            'djcelery',
-            'kombu.transport.django',
         ) + PROJECT_APPS,
         SITE_ID = 1,
         ROOT_URLCONF = 'facebook_auth.urls',
     )
 
-djcelery.setup_loader()
 execute_from_command_line(['runtests.py', 'test'])
