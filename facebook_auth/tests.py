@@ -19,10 +19,10 @@ import pytz
 from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
 from facebook_auth import forms
-from facebook_auth.facepy_wrapper import utils
+from facebook_auth.facepy_wrapper import utils as wrapper_utils
 from facebook_auth.facepy_wrapper import graph_api
 from facebook_auth import models
-from facebook_auth import urls
+from facebook_auth import utils
 from facebook_auth import views
 
 
@@ -391,30 +391,30 @@ class TestDebugAllTokensForUser(test.TestCase):
 
 class TestNextUrl(test.TestCase):
     def test_invalid_next(self):
-        with self.assertRaises(urls.InvalidNextUrl):
-            urls.Next().decode('1:2:3')
+        with self.assertRaises(utils.InvalidNextUrl):
+            utils.Next().decode('1:2:3')
 
     def test_invalid_next_format(self):
-        with self.assertRaises(urls.InvalidNextUrl):
-            urls.Next().decode('this is not valid signature')
+        with self.assertRaises(utils.InvalidNextUrl):
+            utils.Next().decode('this is not valid signature')
 
     def test_empty_next(self):
-        with self.assertRaises(urls.InvalidNextUrl):
-            urls.Next().decode('')
+        with self.assertRaises(utils.InvalidNextUrl):
+            utils.Next().decode('')
 
     def test_if_encoding_is_dictionary_order_independent(self):
         ordered = collections.OrderedDict([('A', 'a'), ('B', 'b')])
         reverse_ordered = collections.OrderedDict([('B', 'b'), ('A', 'a')])
-        self.assertEqual(urls.Next().encode(ordered),
-                         urls.Next().encode(reverse_ordered))
+        self.assertEqual(utils.Next().encode(ordered),
+                         utils.Next().encode(reverse_ordered))
 
     @mock.patch('django.core.signing.time.time')
     def test_if_encoding_does_not_vary_in_time(self, time):
         data = {'a': 3}
         time.return_value = 16
-        old = urls.Next().encode(data)
+        old = utils.Next().encode(data)
         time.return_value = 42
-        new = urls.Next().encode(data)
+        new = utils.Next().encode(data)
         self.assertEqual(old, new)
 
 
@@ -422,7 +422,7 @@ class HandlerAcceptanceTest(test.TestCase):
     @mock.patch('facebook_auth.views.authenticate')
     def test_valid_next(self, authenticate):
         authenticate.return_value = None
-        encoded_next = urls.Next().encode({
+        encoded_next = utils.Next().encode({
             'next': 'http://next.example.com',
             'close': 'http://close.example.com'})
         next_value = parse.parse_qs(encoded_next)['next'][0]
@@ -447,12 +447,12 @@ class HandlerAcceptanceTest(test.TestCase):
 
 class FacebookBackendTest(test.TestCase):
     def test_extract_access_token_pre2_3(self):
-        access_token = utils._parse_access_token_response('access_token=token&expires=5121505')
+        access_token = wrapper_utils._parse_access_token_response('access_token=token&expires=5121505')
         self.assertEqual('token', access_token.access_token)
         self.assertEqual(5121505, access_token.expires_in_seconds)
 
     def test_extract_access_token_post2_3(self):
-        access_token = utils._parse_access_token_response({
+        access_token = wrapper_utils._parse_access_token_response({
             'access_token': 'token',
             'expires_in': 5121505,
             'token_type': 'bearer'
