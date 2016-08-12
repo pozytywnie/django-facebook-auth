@@ -53,6 +53,7 @@ class TruncaterTest(test.SimpleTestCase):
 
 
 class UserFactoryTest(test.TestCase):
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_empty(self):
         profile = {
             'id': '1',
@@ -62,6 +63,7 @@ class UserFactoryTest(test.TestCase):
         }
         UserFactory()._product_user('', profile).save()
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_no_email(self):
         profile = {
             'id': '1',
@@ -70,6 +72,7 @@ class UserFactoryTest(test.TestCase):
         }
         UserFactory()._product_user('', profile).save()
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_to_long(self):
         profile = {
             'id': '1',
@@ -90,12 +93,14 @@ class UserFactoryTest(test.TestCase):
 
 @mock.patch('facebook_auth.utils.get_graph')
 class UserFactoryOnErrorTest(test.TestCase):
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_success(self, get_graph):
         factory = UserFactory()
         get_graph.return_value.get.return_value = {'id': '123'}
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_success_in_retry(self, get_graph):
         factory = UserFactory()
         get_graph.return_value.get.side_effect = [
@@ -161,6 +166,7 @@ class GraphObserversTest(test.SimpleTestCase):
 
 
 class UserTokenManagerTest(test.TestCase):
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_simple_insert(self):
         manager = models.UserTokenManager
         manager.insert_token('123', 'abc123',
@@ -168,6 +174,7 @@ class UserTokenManagerTest(test.TestCase):
         token = manager.get_access_token('123')
         self.assertEqual('abc123', token.token)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_multiple_inserts(self):
         manager = models.UserTokenManager
         manager.insert_token('123', 'abc123',
@@ -180,6 +187,7 @@ class UserTokenManagerTest(test.TestCase):
         token2 = manager.get_access_token('456')
         self.assertEqual('abc456', token2.token)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_invalidating_token(self):
         manager = models.UserTokenManager
         manager.insert_token('123', 'abc123',
@@ -190,6 +198,7 @@ class UserTokenManagerTest(test.TestCase):
 
     @mock.patch('django.utils.timezone.now',
                 return_value=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc))
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_getting_wildcarded_token_first(self, _):
         models.UserToken.objects.create(
             provider_user_id='555',
@@ -215,6 +224,7 @@ class UserTokenManagerTest(test.TestCase):
         token = manager.get_access_token('555')
         self.assertEqual('WildcardedToken', token.token)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_getting_latest_token_on_no_wildcarded(self):
         models.UserToken.objects.create(
             provider_user_id='555',
@@ -236,6 +246,7 @@ class UserTokenManagerTest(test.TestCase):
         self.assertEqual('lastExpiring', token.token)
 
     @mock.patch('django.utils.timezone.now')
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_getting_latest_token_on_expired_wildcarded(self, now):
         now.return_value = datetime.datetime(1989, 1, 1, tzinfo=pytz.utc)
         models.UserToken.objects.create(
