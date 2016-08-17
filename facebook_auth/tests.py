@@ -84,7 +84,7 @@ class UserFactoryTest(test.TestCase):
         user.save()
 
         def get_length(field):
-            return user._meta.get_field_by_name(field)[0].max_length
+            return user._meta.get_field(field).max_length
 
         self.assertEqual(user.first_name, 'a' * get_length('first_name'))
         self.assertEqual(user.last_name, 'a' * get_length('last_name'))
