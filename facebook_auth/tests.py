@@ -19,10 +19,10 @@ import pytz
 from facebook_auth.backends import _truncate as truncate
 from facebook_auth.backends import UserFactory
 from facebook_auth import forms
-from facebook_auth.facepy_wrapper import utils
+from facebook_auth.facepy_wrapper import utils as wrapper_utils
 from facebook_auth.facepy_wrapper import graph_api
 from facebook_auth import models
-from facebook_auth import urls
+from facebook_auth import utils
 from facebook_auth import views
 
 
@@ -53,6 +53,7 @@ class TruncaterTest(test.SimpleTestCase):
 
 
 class UserFactoryTest(test.TestCase):
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_empty(self):
         profile = {
             'id': '1',
@@ -62,6 +63,7 @@ class UserFactoryTest(test.TestCase):
         }
         UserFactory()._product_user('', profile).save()
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_no_email(self):
         profile = {
             'id': '1',
@@ -70,6 +72,7 @@ class UserFactoryTest(test.TestCase):
         }
         UserFactory()._product_user('', profile).save()
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_to_long(self):
         profile = {
             'id': '1',
@@ -81,7 +84,7 @@ class UserFactoryTest(test.TestCase):
         user.save()
 
         def get_length(field):
-            return user._meta.get_field_by_name(field)[0].max_length
+            return user._meta.get_field(field).max_length
 
         self.assertEqual(user.first_name, 'a' * get_length('first_name'))
         self.assertEqual(user.last_name, 'a' * get_length('last_name'))
@@ -90,12 +93,14 @@ class UserFactoryTest(test.TestCase):
 
 @mock.patch('facebook_auth.utils.get_graph')
 class UserFactoryOnErrorTest(test.TestCase):
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_success(self, get_graph):
         factory = UserFactory()
         get_graph.return_value.get.return_value = {'id': '123'}
         user = factory.get_user("123")
         self.assertEqual(123, user.user_id)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_success_in_retry(self, get_graph):
         factory = UserFactory()
         get_graph.return_value.get.side_effect = [
@@ -161,6 +166,7 @@ class GraphObserversTest(test.SimpleTestCase):
 
 
 class UserTokenManagerTest(test.TestCase):
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_simple_insert(self):
         manager = models.UserTokenManager
         manager.insert_token('123', 'abc123',
@@ -168,6 +174,7 @@ class UserTokenManagerTest(test.TestCase):
         token = manager.get_access_token('123')
         self.assertEqual('abc123', token.token)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_multiple_inserts(self):
         manager = models.UserTokenManager
         manager.insert_token('123', 'abc123',
@@ -180,6 +187,7 @@ class UserTokenManagerTest(test.TestCase):
         token2 = manager.get_access_token('456')
         self.assertEqual('abc456', token2.token)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_invalidating_token(self):
         manager = models.UserTokenManager
         manager.insert_token('123', 'abc123',
@@ -190,6 +198,7 @@ class UserTokenManagerTest(test.TestCase):
 
     @mock.patch('django.utils.timezone.now',
                 return_value=datetime.datetime(1989, 1, 1, tzinfo=pytz.utc))
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_getting_wildcarded_token_first(self, _):
         models.UserToken.objects.create(
             provider_user_id='555',
@@ -215,6 +224,7 @@ class UserTokenManagerTest(test.TestCase):
         token = manager.get_access_token('555')
         self.assertEqual('WildcardedToken', token.token)
 
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_getting_latest_token_on_no_wildcarded(self):
         models.UserToken.objects.create(
             provider_user_id='555',
@@ -236,6 +246,7 @@ class UserTokenManagerTest(test.TestCase):
         self.assertEqual('lastExpiring', token.token)
 
     @mock.patch('django.utils.timezone.now')
+    @mock.patch('facebook_auth.models.FacebookTokenManager.debug_all_user_tokens', mock.Mock())
     def test_getting_latest_token_on_expired_wildcarded(self, now):
         now.return_value = datetime.datetime(1989, 1, 1, tzinfo=pytz.utc)
         models.UserToken.objects.create(
@@ -391,30 +402,30 @@ class TestDebugAllTokensForUser(test.TestCase):
 
 class TestNextUrl(test.TestCase):
     def test_invalid_next(self):
-        with self.assertRaises(urls.InvalidNextUrl):
-            urls.Next().decode('1:2:3')
+        with self.assertRaises(utils.InvalidNextUrl):
+            utils.Next().decode('1:2:3')
 
     def test_invalid_next_format(self):
-        with self.assertRaises(urls.InvalidNextUrl):
-            urls.Next().decode('this is not valid signature')
+        with self.assertRaises(utils.InvalidNextUrl):
+            utils.Next().decode('this is not valid signature')
 
     def test_empty_next(self):
-        with self.assertRaises(urls.InvalidNextUrl):
-            urls.Next().decode('')
+        with self.assertRaises(utils.InvalidNextUrl):
+            utils.Next().decode('')
 
     def test_if_encoding_is_dictionary_order_independent(self):
         ordered = collections.OrderedDict([('A', 'a'), ('B', 'b')])
         reverse_ordered = collections.OrderedDict([('B', 'b'), ('A', 'a')])
-        self.assertEqual(urls.Next().encode(ordered),
-                         urls.Next().encode(reverse_ordered))
+        self.assertEqual(utils.Next().encode(ordered),
+                         utils.Next().encode(reverse_ordered))
 
     @mock.patch('django.core.signing.time.time')
     def test_if_encoding_does_not_vary_in_time(self, time):
         data = {'a': 3}
         time.return_value = 16
-        old = urls.Next().encode(data)
+        old = utils.Next().encode(data)
         time.return_value = 42
-        new = urls.Next().encode(data)
+        new = utils.Next().encode(data)
         self.assertEqual(old, new)
 
 
@@ -422,7 +433,7 @@ class HandlerAcceptanceTest(test.TestCase):
     @mock.patch('facebook_auth.views.authenticate')
     def test_valid_next(self, authenticate):
         authenticate.return_value = None
-        encoded_next = urls.Next().encode({
+        encoded_next = utils.Next().encode({
             'next': 'http://next.example.com',
             'close': 'http://close.example.com'})
         next_value = parse.parse_qs(encoded_next)['next'][0]
@@ -447,12 +458,12 @@ class HandlerAcceptanceTest(test.TestCase):
 
 class FacebookBackendTest(test.TestCase):
     def test_extract_access_token_pre2_3(self):
-        access_token = utils._parse_access_token_response('access_token=token&expires=5121505')
+        access_token = wrapper_utils._parse_access_token_response('access_token=token&expires=5121505')
         self.assertEqual('token', access_token.access_token)
         self.assertEqual(5121505, access_token.expires_in_seconds)
 
     def test_extract_access_token_post2_3(self):
-        access_token = utils._parse_access_token_response({
+        access_token = wrapper_utils._parse_access_token_response({
             'access_token': 'token',
             'expires_in': 5121505,
             'token_type': 'bearer'

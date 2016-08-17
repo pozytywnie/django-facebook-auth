@@ -1,4 +1,4 @@
-from views import handler
+from facebook_auth.views import handler
 
 from django.conf.urls import url
 
